@@ -23,7 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.stellaridea.swiftvision.ui.common.ButtonIconX
+import com.stellaridea.swiftvision.ui.common.IconButton
 import com.stellaridea.swiftvision.ui.navigation.Graph
 import com.stellaridea.swiftvision.ui.views.camera.CameraViewModel
 
@@ -40,12 +40,12 @@ fun Menu(
         Items.Capture,
         Items.Gallery
     )
-    var camera_value by remember { mutableStateOf(false) }
+    var cameraValue by remember { mutableStateOf(false) }
 
 
     val launcherGallery = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()){
         it?.let{
-            camera_value = false
+            cameraValue = false
             cameraViewModel.capturePicture(context,it){
                 navController.navigate(Graph.IMAGE_DETAIL)
             }
@@ -65,19 +65,19 @@ fun Menu(
         ) {
             itemList.forEach { item ->
                 val icon = item.icon
-                ButtonIconX(
-                    modifier = if (item == Items.Capture) Modifier.size(60.dp) else Modifier.size(50.dp),
+                IconButton(
+                    modifier = Modifier.size(item.size),
                     imageVector = icon,
                     color = if (item == Items.Capture) Color.Black else MaterialTheme.colorScheme.background,
                     colorIcon = if (item == Items.Capture) Color.White else Color.Black,
-                    isLoading = if(item ==Items.Capture) camera_value else false
+                    isLoading = if(item ==Items.Capture) cameraValue else false
                 ) {
                     when (item) {
                         Items.Switch -> {
                             cameraViewModel.toggleCamera();
                         }
                         Items.Capture -> {
-                            camera_value = true
+                            cameraValue = true
                             cameraViewModel.capturePicture(
                                 context = context,
                                 captureImage = imageCapture

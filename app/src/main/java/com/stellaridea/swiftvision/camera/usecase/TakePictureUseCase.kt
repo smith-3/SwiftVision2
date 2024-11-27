@@ -19,7 +19,6 @@ fun takePicture(
 ) {
     imageCapture.flashMode = flashMode
     Log.i("Image", "Captura solicitada")
-
     try {
         imageCapture.takePicture(
             ContextCompat.getMainExecutor(context),
@@ -27,7 +26,6 @@ fun takePicture(
                 override fun onCaptureSuccess(image: ImageProxy) {
                     super.onCaptureSuccess(image)
                     Log.i("Image", "Captura exitosa")
-
                     try {
                         val matrix = Matrix().apply {
                             postRotate(image.imageInfo.rotationDegrees.toFloat())
@@ -42,9 +40,14 @@ fun takePicture(
                             matrix,
                             true
                         )
+
+                        // Crear una instancia de ImageModel con los nuevos parámetros
                         val imageModel = ImageModel(
-                            timestamp = Date().time,
-                            bitmap = rotatedBitmap
+                            id = 0, // ID temporal
+                            project_id = 0, // ID de proyecto predeterminado
+                            bitmap = rotatedBitmap,
+                            created_at = Date().time, // Fecha de creación actual
+                            masks = emptyList() // Lista vacía de máscaras por defecto
                         )
                         onPhotoTaken(imageModel)
                     } catch (e: Exception) {

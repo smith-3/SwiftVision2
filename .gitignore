@@ -2,7 +2,7 @@
 .gradle/
 gradle/
 gradle.properties
-build.gradle.kts
+# build.gradle.kts
 gradlew
 gradlew.bat
 build/

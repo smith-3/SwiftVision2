@@ -28,8 +28,8 @@ import com.stellaridea.swiftvision.camera.usecase.DetectMaskTap
 import com.stellaridea.swiftvision.camera.usecase.getPixelPositionFromByteArray
 import com.stellaridea.swiftvision.camera.usecase.takePicture
 import com.stellaridea.swiftvision.data.image.model.ImageModel
-import com.stellaridea.swiftvision.data.image.model.Mask
 import com.stellaridea.swiftvision.data.image.model.Predict
+import com.stellaridea.swiftvision.data.mask.model.Mask
 import com.stellaridea.swiftvision.data.sam.RetrofitService
 import com.stellaridea.swiftvision.data.sam.model.MasksResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -118,24 +118,22 @@ class CameraViewModel @Inject constructor(
         onPhotoTaken: (ImageModel?) -> Unit
     ) {
         viewModelScope.launch {
-            // Obtener Bitmap directamente desde el Uri
             val bitmap = loadBitmapFromUri(context, imageUri)
-
-            // Crear ImageModel si el bitmap no es null
             val imageModel = bitmap?.let {
                 ImageModel(
-                    timestamp = Date().time,
-                    bitmap = it // Asigna el bitmap
+                    id = Date().time.toInt(), // ID temporal basado en timestamp
+                    project_id = 0,
+                    bitmap = it,
+                    created_at = Date().time,
+                    masks = emptyList()
                 )
             }
 
-            // Actualizar el valor de _lastImage y procesar la imagen si existe un modelo
             if (imageModel != null) {
-                _lastImage.value = imageModel // Actualización directa si es StateFlow, usar postValue si es LiveData
-                processImage(imageModel.bitmap) // Procesar la imagen usando el bitmap
+                _lastImage.value = imageModel
+                processImage(imageModel.bitmap)
             }
 
-            // Notificar que la foto fue tomada
             onPhotoTaken(imageModel)
         }
     }
@@ -170,7 +168,6 @@ class CameraViewModel @Inject constructor(
             var currentAttempt = 0
             var success = false
 
-            // Convierte Bitmap a byteArray
             val byteArrayOutputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
             val byteArray = byteArrayOutputStream.toByteArray()
@@ -185,7 +182,6 @@ class CameraViewModel @Inject constructor(
                         "Enviando solicitud para cargar la imagen... (Intento ${currentAttempt + 1})"
                     )
 
-                    // Realiza la solicitud
                     val masksResponse: MasksResponse = retrofitService.uploadImage(body)
                     val updatedImageModel = _lastImage.value?.copy(masks = masksResponse.masks)
                     _lastImage.value = updatedImageModel
@@ -195,36 +191,33 @@ class CameraViewModel @Inject constructor(
 
                 } catch (e: HttpException) {
                     Log.e("SAM", "Error HTTP: ${e.code()} - ${e.message()}")
-                    break // Sale del ciclo si ocurre un error HTTP
+                    break
 
                 } catch (e: IOException) {
                     Log.e("SAM", "Error de IO: ${e.message}")
                     currentAttempt++
                     if (currentAttempt < maxRetries) {
-                        delay(2000L) // Espera antes de reintentar
+                        delay(2000L)
                     } else {
                         Log.e("SAM", "Falló después de $maxRetries intentos.")
                     }
 
                 } catch (e: Exception) {
                     Log.e("SAM", "Error al procesar la imagen: ${e.message}")
-                    break // Sale del ciclo si ocurre otro tipo de error
+                    break
                 }
             }
         }
     }
 
-
     fun detectMaskTap(tapPosition: Offset, maskSize: IntSize) {
-        _lastImage.value?.masks.let { masks ->
+        _lastImage.value?.let { image ->
             Log.d("selectMask", "Detecting mask for tap position: $tapPosition")
-            var mask: Mask? = null
-            DetectMaskTap(tapPosition, masks, maskSize) { mask = it }
-            if (mask != null) {
+            var mask: Mask = image.masks[0]
+            DetectMaskTap(tapPosition, image.masks, maskSize) { mask = it }
+            run {
                 Log.d("selectMask", "Mask detected: $mask")
-                toggleMaskSelection(mask!!)
-            } else {
-                Log.d("selectMask", "No mask detected.")
+                toggleMaskSelection(mask)
             }
         }
     }
@@ -271,7 +264,7 @@ class CameraViewModel @Inject constructor(
 
     fun toggleMaskSelection(mask: Mask) {
         _lastImage.value?.let { imageModel ->
-            val updatedMasks = imageModel.masks?.map {
+            val updatedMasks = imageModel.masks.map {
                 if (it.id == mask.id) it.copy(active = !it.active)
                 else it
             }
@@ -285,18 +278,18 @@ class CameraViewModel @Inject constructor(
             _newImage.value = true
 
             _lastImage.value?.let { imageModel ->
-                if (imageModel.masks.isNullOrEmpty()) {
+                if (imageModel.masks.isEmpty()) {
                     Log.e("hairColorMasks", "Masks are null or empty")
                     _newImage.value = false
                     action()
                     return@launch
                 }
-                val activeMasks = imageModel.masks!!.filter { it.active }
+                val activeMasks = imageModel.masks.filter { it.active }
                 if (activeMasks.isNotEmpty()) {
                     val masksJsonArray =
-                        activeMasks.map { mask -> imageModel.masks!!.indexOf(mask) }
+                        activeMasks.map { mask -> imageModel.masks.indexOf(mask) }
                     val bitmap = imageModel.bitmap
-                    if (bitmap != null) {
+                    run {
                         val maskJsonPart = RequestBody.create(
                             "application/json".toMediaTypeOrNull(),
                             masksJsonArray.toString()
@@ -315,7 +308,7 @@ class CameraViewModel @Inject constructor(
                                         val updatedImageModel = imageModel.copy(
                                             bitmap = newBitmap
                                         )
-                                        updatedImageModel.masks!!.forEach { mask ->
+                                        updatedImageModel.masks.forEach { mask ->
                                             if (mask.active) {
                                                 mask.active = false
                                             }
@@ -334,8 +327,6 @@ class CameraViewModel @Inject constructor(
                                 }
                             }
                         }
-                    } else {
-                        Log.e("hairColorMasks", "Bitmap is null")
                     }
                 } else {
                     Log.e("hairColorMasks", "No active masks found")

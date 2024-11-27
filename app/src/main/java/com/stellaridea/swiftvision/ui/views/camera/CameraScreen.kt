@@ -34,9 +34,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.stellaridea.swiftvision.ui.common.AppName
-import com.stellaridea.swiftvision.ui.common.ButtonIconX
-import com.stellaridea.swiftvision.ui.common.IconHome
+import com.stellaridea.swiftvision.ui.common.IconButton
 import com.stellaridea.swiftvision.ui.common.menu.Menu
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -97,10 +95,8 @@ fun CameraScreen(navController: NavHostController) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        IconHome()
-                        AppName(Modifier.weight(1f))
                         if (cameraSelectorCurrent == true) {
-                            ButtonIconX(
+                            IconButton(
                                 imageVector = cameraViewModel.flashIcon
                             ) {
                                 cameraViewModel.toggleFlashMode()
