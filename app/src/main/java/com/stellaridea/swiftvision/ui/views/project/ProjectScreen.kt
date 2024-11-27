@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.stellaridea.swiftvision.data.project.model.ProjectResponse
+import com.stellaridea.swiftvision.models.projects.ProjectResponse
 import com.stellaridea.swiftvision.ui.navigation.Graph
 
 @OptIn(ExperimentalMaterial3Api::class)

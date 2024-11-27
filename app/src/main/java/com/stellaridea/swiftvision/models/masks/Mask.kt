@@ -1,4 +1,4 @@
-package com.stellaridea.swiftvision.data.mask.model
+package com.stellaridea.swiftvision.models.masks
 
 import android.graphics.Bitmap
 import androidx.room.Entity

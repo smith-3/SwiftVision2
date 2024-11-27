@@ -4,7 +4,7 @@ import SegmentationDeserializer
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.stellaridea.swiftvision.data.image.ImageService
-import com.stellaridea.swiftvision.data.mask.model.Mask
+import com.stellaridea.swiftvision.models.masks.Mask
 import com.stellaridea.swiftvision.data.project.ProjectService
 import com.stellaridea.swiftvision.data.sam.AuthService
 import com.stellaridea.swiftvision.data.sam.RetrofitService

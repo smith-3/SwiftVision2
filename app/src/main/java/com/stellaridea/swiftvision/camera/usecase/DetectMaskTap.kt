@@ -5,7 +5,7 @@ import android.graphics.Color
 import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntSize
-import com.stellaridea.swiftvision.data.mask.model.Mask
+import com.stellaridea.swiftvision.models.masks.Mask
 import kotlin.math.roundToInt
 
 fun DetectMaskTap(

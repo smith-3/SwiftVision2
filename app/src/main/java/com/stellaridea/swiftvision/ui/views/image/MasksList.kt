@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
-import com.stellaridea.swiftvision.data.mask.model.Mask
+import com.stellaridea.swiftvision.models.masks.Mask
 import com.stellaridea.swiftvision.ui.views.camera.CameraViewModel
 @Composable
 fun MasksList(

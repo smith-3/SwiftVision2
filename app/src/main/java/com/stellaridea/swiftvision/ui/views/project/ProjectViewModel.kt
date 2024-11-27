@@ -6,9 +6,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.stellaridea.swiftvision.data.project.ProjectService
-import com.stellaridea.swiftvision.data.project.model.ProjectRequest
-import com.stellaridea.swiftvision.data.project.model.ProjectResponse
-import com.stellaridea.swiftvision.data.project.model.ProjectUpdateRequest
+import com.stellaridea.swiftvision.models.projects.ProjectRequest
+import com.stellaridea.swiftvision.models.projects.ProjectResponse
+import com.stellaridea.swiftvision.models.projects.ProjectUpdateRequest
 import com.stellaridea.swiftvision.data.user.UserPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch

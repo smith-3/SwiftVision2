@@ -4,7 +4,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
-import com.stellaridea.swiftvision.data.mask.model.Mask
+import com.stellaridea.swiftvision.models.masks.Mask
 import java.lang.reflect.Type
 import java.util.Date
 

@@ -1,4 +1,4 @@
-package com.stellaridea.swiftvision.data.project.model
+package com.stellaridea.swiftvision.models.projects
 
 data class ProjectUpdateRequest(
     val name: String

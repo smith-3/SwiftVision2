@@ -1,7 +1,7 @@
 package com.stellaridea.swiftvision.data.image.model
 
 import android.graphics.Bitmap
-import com.stellaridea.swiftvision.data.mask.model.Mask
+import com.stellaridea.swiftvision.models.masks.Mask
 
 data class ImageModel(
     val id: Int,

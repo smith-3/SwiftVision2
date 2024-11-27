@@ -1,8 +1,8 @@
 package com.stellaridea.swiftvision.data.project
 
-import com.stellaridea.swiftvision.data.project.model.ProjectRequest
-import com.stellaridea.swiftvision.data.project.model.ProjectResponse
-import com.stellaridea.swiftvision.data.project.model.ProjectUpdateRequest
+import com.stellaridea.swiftvision.models.projects.ProjectRequest
+import com.stellaridea.swiftvision.models.projects.ProjectResponse
+import com.stellaridea.swiftvision.models.projects.ProjectUpdateRequest
 import retrofit2.Response
 import retrofit2.http.*
 

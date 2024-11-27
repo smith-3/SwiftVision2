@@ -29,7 +29,7 @@ import com.stellaridea.swiftvision.camera.usecase.getPixelPositionFromByteArray
 import com.stellaridea.swiftvision.camera.usecase.takePicture
 import com.stellaridea.swiftvision.data.image.model.ImageModel
 import com.stellaridea.swiftvision.data.image.model.Predict
-import com.stellaridea.swiftvision.data.mask.model.Mask
+import com.stellaridea.swiftvision.models.masks.Mask
 import com.stellaridea.swiftvision.data.sam.RetrofitService
 import com.stellaridea.swiftvision.data.sam.model.MasksResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
