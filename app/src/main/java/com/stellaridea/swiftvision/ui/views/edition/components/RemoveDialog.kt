@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun PromptDialog(
+fun RemoveDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
@@ -84,7 +84,7 @@ fun PromptDialog(
 
 // Mensaje para el usuario
                 Text(
-                    text = "Tu imaginación es el límite",
+                    text = "¡Remueve el objeto!",
                     style = TextStyle(
                         fontWeight = FontWeight.Bold, // Aplica negrita
                         fontSize = 30.sp,
@@ -98,7 +98,7 @@ fun PromptDialog(
                 )
 
                 Text(
-                    text = "¡Puedes generar una imagen con IA!",
+                    text = "Elimina el objeto que no deseas en la imagen con AI",
                     style = TextStyle(
                         fontSize = 20.sp,
                         textAlign = TextAlign.Center
@@ -132,7 +132,7 @@ fun PromptDialog(
                     }
                     // Botón generar
                     Button(onClick = { onConfirm(textValue) }) {
-                        Text("Generar")
+                        Text("Remover")
                     }
                 }
             }

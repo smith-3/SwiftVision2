@@ -21,6 +21,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -28,7 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun PromptDialog(
+fun PromptBackgroundDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
 ) {
@@ -74,17 +75,18 @@ fun PromptDialog(
                             .background(MaterialTheme.colorScheme.primary, CircleShape) // Color púrpura
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.AutoAwesome,
-                            contentDescription = "Generar con IA",
+                            imageVector = Icons.Filled.Photo,
+                            contentDescription = "Cambiar Fondo",
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)
                         )
+
                     }
                 }
 
 // Mensaje para el usuario
                 Text(
-                    text = "Tu imaginación es el límite",
+                    text = "Cambia el fondo de la imagen",
                     style = TextStyle(
                         fontWeight = FontWeight.Bold, // Aplica negrita
                         fontSize = 30.sp,
@@ -98,7 +100,7 @@ fun PromptDialog(
                 )
 
                 Text(
-                    text = "¡Puedes generar una imagen con IA!",
+                    text = "Describe el nuevo fondo para tu imagen.",
                     style = TextStyle(
                         fontSize = 20.sp,
                         textAlign = TextAlign.Center
