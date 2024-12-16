@@ -1,7 +1,9 @@
 package com.stellaridea.swiftvision.ui.views.project
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
@@ -11,7 +13,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.stellaridea.swiftvision.models.projects.Project
 
 @Composable
@@ -60,6 +65,13 @@ fun ProjectItem(
                         Text("Actualizar")
                     }
                 }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { if (!isLoading) showEditDialog = false }
+                ) {
+                    Text("Cancelar")
+                }
             }
         )
     }
@@ -83,6 +95,11 @@ fun ProjectItem(
                 ) {
                     Text("Eliminar")
                 }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancelar")
+                }
             }
         )
     }
@@ -91,23 +108,25 @@ fun ProjectItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
+        shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
+            // Imagen adaptativa
             val firstImage = project.images.firstOrNull()
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
-                    .padding(bottom = 8.dp),
+                    .height(150.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (firstImage?.bitmap != null) {
                     Image(
                         bitmap = firstImage.bitmap!!.asImageBitmap(),
                         contentDescription = "Imagen del proyecto",
+                        contentScale = ContentScale.Crop, // Ajusta sin deformar
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
@@ -115,38 +134,65 @@ fun ProjectItem(
                 }
             }
 
+            // Título del proyecto
             Text(
                 text = project.name,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp)
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.padding(vertical = 8.dp)
             )
 
+            // Iconos con texto descriptivo
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { showEditDialog = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar proyecto",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-                IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar proyecto",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-                IconButton(onClick = { onNavigate() }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = "Abrir proyecto",
-                        tint = MaterialTheme.colorScheme.secondary
-                    )
-                }
+                IconWithText(
+                    icon = Icons.Default.Edit,
+                    text = "Editar",
+                    color = MaterialTheme.colorScheme.primary,
+                    onClick = { showEditDialog = true }
+                )
+                IconWithText(
+                    icon = Icons.Default.Delete,
+                    text = "Eliminar",
+                    color = MaterialTheme.colorScheme.error,
+                    onClick = { showDeleteDialog = true }
+                )
+                IconWithText(
+                    icon = Icons.Default.ArrowForward,
+                    text = "Abrir",
+                    color = MaterialTheme.colorScheme.secondary,
+                    onClick = { onNavigate() }
+                )
             }
         }
+    }
+}
+
+@Composable
+fun IconWithText(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    color: androidx.compose.ui.graphics.Color,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = text,
+            tint = color,
+            modifier = Modifier.size(24.dp)
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }

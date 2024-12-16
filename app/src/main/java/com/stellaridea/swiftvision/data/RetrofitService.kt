@@ -11,24 +11,16 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Part
-import retrofit2.http.Path
+import retrofit2.http.*
 
 interface RetrofitService {
-
     @Multipart
     @POST("/projects")
     suspend fun createProject(
         @Part("user_id") userId: RequestBody,
         @Part("project_name") projectName: RequestBody,
         @Part file: MultipartBody.Part
-    ): Response<ProjectCreateResponse> // Cambiado a Response<>
+    ): Response<ProjectCreateResponse>
 
     @GET("projects/{user_id}/")
     suspend fun getProjects(@Path("user_id") userId: Int): Response<List<Project>>
@@ -42,7 +34,6 @@ interface RetrofitService {
     @DELETE("projects/{project_id}")
     suspend fun deleteProject(@Path("project_id") projectId: Int): Response<Unit>
 
-    // generamos una nueva mascara
     @Multipart
     @POST("/masks_points")
     suspend fun maskPoints(
@@ -50,17 +41,51 @@ interface RetrofitService {
         @Part("labels") labels: RequestBody
     ): Mask
 
-    // Recuperamos las mascaras de una imagen
     @GET("/images/{image_id}/masks/")
     suspend fun getMasksByImageId(@Path("image_id") imageId: Int): Response<List<Mask>>
-    //Recuperamos la imagen
+
     @GET("/images/{image_id}/download")
     suspend fun downloadImage(@Path("image_id") imageId: Int): Response<ResponseBody>
 
-    // Recuperar Imagenes IDs
     @GET("/images/{project_id}/")
     suspend fun getImagesByProjectId(@Path("project_id") projectId: Int): Response<List<ImageResponse>>
 
     @DELETE("/images/{image_id}")
     suspend fun deleteImage(@Path("image_id") imageId: Int): Response<Unit>
+
+    // Nuevo endpoint: Procesar para eliminar máscara de la imagen
+    @GET("/process_inpainting_with_mask")
+    suspend fun processInpainting(
+        @Query("project_id") projectId: Int,
+        @Query("image_id") imageId: Int,
+        @Query("mask_id") maskId: Int
+    ): Response<ResponseBody> // Ajusta el tipo de respuesta según el backend
+
+    // Nuevo endpoint: Generar imagen con un promp
+    @GET("/generate_image")
+    suspend fun generateImage(
+        @Query("project_id") projectId: Int,
+        @Query("image_id") imageId: Int,
+        @Query("mask_id") maskId: Int,
+        @Query("promt") prompt: String
+    ): Response<ResponseBody> // Ajusta el tipo de respuesta según el backend
+
+    // Nuevo endpoint: Generar fondo de imagen con un promp
+    @GET("/generate_image_backgraund")
+    suspend fun generateImageBackground(
+        @Query("project_id") projectId: Int,
+        @Query("image_id") imageId: Int,
+        @Query("mask_id") maskId: Int,
+        @Query("promt") prompt: String
+    ): Response<ResponseBody> // Ajusta el tipo de respuesta según el backend
+
+    @Multipart
+    @POST("/upload_mask")
+    suspend fun uploadMask(
+        @Part("image_id") imageId: RequestBody,
+        @Part("project_id") projectId: RequestBody,
+        @Part("counts") countsJson: RequestBody,   // El JSON comprimido
+        @Part("size") size: RequestBody           // Ancho y alto
+    ): Response<Unit>
+
 }

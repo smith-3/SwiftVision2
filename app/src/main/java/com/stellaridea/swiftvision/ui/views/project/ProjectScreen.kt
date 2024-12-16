@@ -2,25 +2,37 @@
 package com.stellaridea.swiftvision.ui.views.project
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.stellaridea.swiftvision.ui.navigation.Graph
-import com.stellaridea.swiftvision.ui.navigation.GraphRoot
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshState
+import com.stellaridea.swiftvision.ui.navigation.Graph
+import com.stellaridea.swiftvision.ui.navigation.GraphRoot
 
 
 @Composable
@@ -124,6 +136,10 @@ fun ProjectScreen(navController: NavHostController) {
                                 onNavigate = { navController.navigate("edition/${project.id}/${project.name}")
                                 }
                             )
+                        }
+                        // Agregamos un Spacer al final
+                        item {
+                            Spacer(modifier = Modifier.height(72.dp))
                         }
                     }
                 }

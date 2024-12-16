@@ -10,15 +10,13 @@ import androidx.compose.ui.unit.dp
 import com.stellaridea.swiftvision.R
 
 @Composable
-fun Logo(modifier: Modifier){
+fun Logo(modifier: Modifier) {
     Image(
-        modifier = modifier.size(120.dp).padding(10.dp),
-        painter =
-        if (true)
-            painterResource(id = R.drawable.logo_patuju_claro)
-        else
-            painterResource(id = R.drawable.logo_patuju_oscuro)
-        ,
-        contentDescription = "logo",
-    )
+        modifier = modifier
+            .size(120.dp)
+            .padding(10.dp),
+        painter = painterResource(id = R.mipmap.ic_launcher_round), // Usa el nombre que seleccionaste
+        contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+        contentDescription = "contentDescription",
+        )
 }

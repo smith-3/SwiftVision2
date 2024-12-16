@@ -57,8 +57,10 @@ fun LoginScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(id = R.drawable.logo_patuju_oscuro),
+                painter = painterResource(id = R.mipmap.ic_launcher_foreground),
                 contentDescription = "Logo de la app",
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+
                 modifier = Modifier.size(150.dp)
             )
 
