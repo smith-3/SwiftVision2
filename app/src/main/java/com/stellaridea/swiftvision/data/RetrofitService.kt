@@ -50,7 +50,7 @@ interface RetrofitService {
         @Part("labels") labels: RequestBody
     ): Mask
 
-    // Recuperamos las mascaras
+    // Recuperamos las mascaras de una imagen
     @GET("/images/{image_id}/masks/")
     suspend fun getMasksByImageId(@Path("image_id") imageId: Int): Response<List<Mask>>
     //Recuperamos la imagen
@@ -60,4 +60,7 @@ interface RetrofitService {
     // Recuperar Imagenes IDs
     @GET("/images/{project_id}/")
     suspend fun getImagesByProjectId(@Path("project_id") projectId: Int): Response<List<ImageResponse>>
+
+    @DELETE("/images/{image_id}")
+    suspend fun deleteImage(@Path("image_id") imageId: Int): Response<Unit>
 }

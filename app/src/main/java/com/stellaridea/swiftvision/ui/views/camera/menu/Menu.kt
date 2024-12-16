@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,9 +32,8 @@ import com.stellaridea.swiftvision.ui.views.camera.CameraViewModel
 @Composable
 fun Menu(
     modifier: Modifier = Modifier,
-    navController: NavHostController,
     imageCapture: ImageCapture,
-    onImageCaptured: (Bitmap) -> Unit
+    onImageCaptured: (Bitmap) -> Unit,
 ) {
     val cameraViewModel: CameraViewModel = hiltViewModel()
     val context = LocalContext.current
@@ -70,8 +70,8 @@ fun Menu(
                 IconButton(
                     modifier = Modifier.size(item.size),
                     imageVector = icon,
-                    color = if (item == Items.Capture) Color.Black else MaterialTheme.colorScheme.background,
-                    colorIcon = if (item == Items.Capture) Color.White else Color.Black,
+                    color = if (item == Items.Capture) Color.Black else Color.Black,
+                    colorIcon = if (item == Items.Capture) Color.White else MaterialTheme.colorScheme.primary,
                     isLoading = if(item == Items.Capture) cameraValue else false
                 ) {
                     when (item) {
@@ -84,6 +84,7 @@ fun Menu(
                                 context = context,
                                 captureImage = imageCapture
                             ) {it ->
+                                cameraValue = false
                                 Log.i("Image", "Imagen capturada :${it}")
                                 onImageCaptured(it)
                             }

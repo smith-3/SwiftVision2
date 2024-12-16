@@ -9,5 +9,5 @@ data class Mask(
     val id: Long,
     val bitmap: Bitmap,
     val size: IntArray,
-    var active: Boolean = false,
-    ) : Serializable
+    val active: Boolean = false // Cambiado de var a val
+) : Serializable

@@ -39,7 +39,7 @@ import com.stellaridea.swiftvision.ui.navigation.GraphRoot
 fun LoginScreen(navController: NavHostController) {
     val viewModel: LoginViewModel = hiltViewModel()
 
-    handleUserLoggedIn(viewModel, navController)
+    HandleUserLoggedIn(viewModel, navController)
 
     val isLoading by viewModel.isLoading.observeAsState(initial = false)
     val email by viewModel.email.observeAsState(initial = "")
@@ -79,9 +79,6 @@ fun LoginScreen(navController: NavHostController) {
             )
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            // Botón de inicio de sesión
-// Botón de inicio de sesión
             Button(
                 onClick = {
                     viewModel.login(
@@ -113,7 +110,6 @@ fun LoginScreen(navController: NavHostController) {
                 }
             }
 
-
             Spacer(modifier = Modifier.height(16.dp))
 
             // Botón para registrarse
@@ -129,7 +125,7 @@ fun LoginScreen(navController: NavHostController) {
 }
 
 @Composable
-fun handleUserLoggedIn(viewModel: LoginViewModel, navController: NavHostController) {
+fun HandleUserLoggedIn(viewModel: LoginViewModel, navController: NavHostController) {
     if (viewModel.isUserLoggedIn()) {
         navController.navigate(GraphRoot.HOME) {
             popUpTo(GraphRoot.LOGIN) { inclusive = true }

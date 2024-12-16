@@ -108,6 +108,7 @@ dependencies {
     // If you want to additionally use the CameraX Extensions library
     implementation("androidx.camera:camera-extensions:${cameraxVersion}")
     implementation("androidx.compose.material:material-icons-extended:1.6.8")
+    implementation(libs.google.accompanist.swiperefresh)
 
 }
 

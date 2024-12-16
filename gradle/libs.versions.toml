@@ -1,4 +1,5 @@
 [versions]
+accompanistSwiperefreshVersion = "0.30.1"
 agp = "8.7.2"
 composeMaterial = "1.4.0"
 kotlin = "2.0.0"
@@ -13,6 +14,7 @@ composeBom = "2024.04.01"
 [libraries]
 androidx-compose-material = { module = "androidx.wear.compose:compose-material", version.ref = "composeMaterial" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+google-accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiperefresh", version.ref = "accompanistSwiperefreshVersion" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

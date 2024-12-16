@@ -27,6 +27,7 @@ import androidx.lifecycle.viewModelScope
 import com.stellaridea.swiftvision.camera.usecase.getPixelPositionFromByteArray
 import com.stellaridea.swiftvision.camera.usecase.takePicture
 import com.stellaridea.swiftvision.data.RetrofitService
+import com.stellaridea.swiftvision.data.user.UserPreferences
 import com.stellaridea.swiftvision.models.images.ImageModel
 import com.stellaridea.swiftvision.models.masks.Mask
 import com.stellaridea.swiftvision.models.masks.Predict
@@ -43,7 +44,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CameraViewModel @Inject constructor(
-    private val retrofitService: RetrofitService
+    private val retrofitService: RetrofitService,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
     private val _flashMode = MutableLiveData(ImageCapture.FLASH_MODE_OFF)
     private val flashMode: LiveData<Int> = _flashMode
@@ -131,33 +133,55 @@ class CameraViewModel @Inject constructor(
     }
 
     fun createProject(
-        context: Context,
         imageName: String,
         bitmap: Bitmap,
         onSuccess: (id: Int) -> Unit,
         onFailure: () -> Unit
     ) {
+        val userId = userPreferences.getUserId() ?: run {
+            Log.e("CameraViewModel", "User ID is null.")
+            onFailure()
+            return
+        }
+        Log.i("CameraViewModel", "User ID: $userId")
+
         viewModelScope.launch {
             try {
-                val userId = RequestBody.create("text/plain".toMediaTypeOrNull(), "1") // Ajusta el ID real
-                val name = RequestBody.create("text/plain".toMediaTypeOrNull(), imageName)
+                val userIdPart =
+                    RequestBody.create("text/plain".toMediaTypeOrNull(), userId.toString())
+                val namePart = RequestBody.create("text/plain".toMediaTypeOrNull(), imageName)
                 val byteArrayOutputStream = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
-                val requestBody = byteArrayOutputStream.toByteArray()
                 val imagePart = MultipartBody.Part.createFormData(
                     "file", "image.jpg",
-                    RequestBody.create("image/jpeg".toMediaTypeOrNull(), requestBody)
+                    RequestBody.create(
+                        "image/jpeg".toMediaTypeOrNull(),
+                        byteArrayOutputStream.toByteArray()
+                    )
                 )
 
-                val response = retrofitService.createProject(userId, name, imagePart)
+                val response = retrofitService.createProject(userIdPart, namePart, imagePart)
+                Log.i("CameraViewModel", "Response: ${response.body()}")
+
                 if (response.isSuccessful) {
-                    response.body()?.let { onSuccess(it.id) }
+                    val body = response.body()
+                    if (body != null) {
+                        Log.i("CameraViewModel", "Project created with ID: ${body.id}")
+                        onSuccess(body.id)
+                    } else {
+                        Log.e(
+                            "CameraViewModel",
+                            "Response body is null despite successful response."
+                        )
+                        onFailure()
+                    }
                 } else {
-                    Log.e("CameraViewModel", "Error al crear proyecto: ${response.errorBody()?.string()}")
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("CameraViewModel", "Error response: $errorBody")
                     onFailure()
                 }
             } catch (e: Exception) {
-                Log.e("CameraViewModel", "Error al crear proyecto: ${e.message}")
+                Log.e("CameraViewModel", "Exception occurred: ${e.message}", e)
                 onFailure()
             }
         }
