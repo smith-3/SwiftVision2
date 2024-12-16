@@ -59,4 +59,9 @@ class MaskViewModel @Inject constructor(
             toggleMaskSelection(mask.id)
         }
     }
+
+    fun isAnyMaskSelected(): Boolean {
+        return _masks.value?.any { it.active } == true
+    }
+
 }

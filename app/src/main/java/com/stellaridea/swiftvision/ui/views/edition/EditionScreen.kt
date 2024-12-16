@@ -1,7 +1,6 @@
 package com.stellaridea.swiftvision.ui.views.edition
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.stellaridea.swiftvision.ui.views.edition.components.ConfirmNavigationDialog
+import com.stellaridea.swiftvision.ui.views.edition.components.EditionDownBar
 import com.stellaridea.swiftvision.ui.views.edition.components.EditionTopBar
 import com.stellaridea.swiftvision.ui.views.edition.components.ImageViewer
 import com.stellaridea.swiftvision.ui.views.edition.components.MasksList
@@ -44,11 +45,19 @@ fun EditionScreen(
 ) {
     val selectedImage by projectViewModel.selectedImage.observeAsState()
     val isLoading by projectViewModel.isLoading.observeAsState(false)
+    val modoPredict by predictViewModel.modoPredict.observeAsState(false)
 
     var showDialog by remember { mutableStateOf(false) }
     var showPromptDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val canGoPrev = projectViewModel.canGoPrevious()
+    val canGoNext = projectViewModel.canGoNext()
+    val masks by maskViewModel.masks.observeAsState(emptyList())
 
+    val hasActiveMask by remember(masks) {
+        derivedStateOf { masks.any { it.active } }
+    }
+    // Efectos iniciales
     LaunchedEffect(selectedImage) {
         selectedImage?.let { maskViewModel.loadMasksForImage(it.id) }
     }
@@ -75,19 +84,39 @@ fun EditionScreen(
         )
     }
 
+    // Pantalla principal
     if (isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = Color.White)
         }
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
+            // Top Bar
+            EditionTopBar(
+                projectName = projectName,
+                canGoPrev = canGoPrev,
+                canGoNext = canGoNext,
+                onPrevious = {
+                    projectViewModel.selectPreviousImage()
+                    selectedImage?.let { maskViewModel.loadMasksForImage(imageId = it.id) }
+                },
+                onNext = {
+                    projectViewModel.selectNextImage()
+                    selectedImage?.let { maskViewModel.loadMasksForImage(imageId = it.id) }
+                },
+                onSave = {
+                    selectedImage?.let {
+                        imageSaveViewModel.saveImageToGallery(context, it.bitmap) { save ->
+                            // Manejar el guardado exitoso
+                        }
+                    }
+                },
+//                onTogglePredict = { predictViewModel.toggleModoPredict() },
+//                isPredictMode = modoPredict
+            )
 
-
-            // Contenido principal
             selectedImage?.let { image ->
                 Box(modifier = Modifier.weight(1f)) {
-                    val modoPredict by predictViewModel.modoPredict.observeAsState(false)
-
                     ImageViewer(
                         image = image,
                         isPredictMode = modoPredict,
@@ -95,38 +124,26 @@ fun EditionScreen(
                         maskViewModel = maskViewModel,
                         isMaskLoading = isLoading
                     )
-
-                    if (!modoPredict) {
-                        MasksList(
-                            imageBitmap = image.bitmap.asImageBitmap(),
-                            viewModel = maskViewModel,
+                }
+                if (!modoPredict) {
+                    MasksList(
+                        imageBitmap = image.bitmap.asImageBitmap(),
+                        viewModel = maskViewModel,
+                    ) {
+                        predictViewModel.toggleModoPredict()
+                    }
+                    // Down Bar: visible solo si no está en modo predictivo
+                    if (hasActiveMask) {
+                        EditionDownBar(
+                            onDeleteMask = {
+                                masks.filter { it.active }
+                                    .forEach { maskViewModel.toggleMaskSelection(it.id) }
+                            },
+                            onGeneratePrompt = { showPromptDialog = true }
                         )
                     }
                 }
             }
-
-            // TOP BAR
-            EditionTopBar(
-                projectViewModel = projectViewModel,
-                predictViewModel = predictViewModel,
-                maskViewModel = maskViewModel,
-                onGeneratePrompt = { showPromptDialog = true },
-                onSave = {
-                    selectedImage?.bitmap?.let { bitmap ->
-                        imageSaveViewModel.saveImageToGallery(context, bitmap) {
-                            Log.d("EditionScreen", "Image saved successfully")
-                        }
-                    }
-                },
-                onDownload = {
-                    selectedImage?.bitmap?.let { bitmap ->
-                        imageSaveViewModel.saveImageToGallery(context, bitmap) {
-                            Log.d("EditionScreen", "Image downloaded successfully")
-                        }
-                    }
-                },
-                onDeleteMask = {}
-            )
         }
     }
 }

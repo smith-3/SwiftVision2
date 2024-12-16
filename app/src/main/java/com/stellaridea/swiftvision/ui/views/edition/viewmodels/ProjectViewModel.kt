@@ -40,6 +40,7 @@ class ProjectViewModel @Inject constructor(
                     val imageIds = imagesResponse.body() ?: emptyList()
 
                     val images = imageIds.map {
+                        Log.i("Image Id:", "${it.id}")
                         Image(
                             id = it.id,
                             bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888),
