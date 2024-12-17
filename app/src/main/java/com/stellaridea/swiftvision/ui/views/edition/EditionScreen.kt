@@ -26,7 +26,9 @@ import com.stellaridea.swiftvision.ui.views.edition.components.EditionDownBar
 import com.stellaridea.swiftvision.ui.views.edition.components.EditionTopBar
 import com.stellaridea.swiftvision.ui.views.edition.components.ImageViewer
 import com.stellaridea.swiftvision.ui.views.edition.components.MasksList
+import com.stellaridea.swiftvision.ui.views.edition.components.PromptBackgroundDialog
 import com.stellaridea.swiftvision.ui.views.edition.components.PromptDialog
+import com.stellaridea.swiftvision.ui.views.edition.components.RemoveDialog
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.ImageSaveViewModel
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.MaskViewModel
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.PredictViewModel
@@ -49,6 +51,8 @@ fun EditionScreen(
 
     var showDialog by remember { mutableStateOf(false) }
     var showPromptDialog by remember { mutableStateOf(false) }
+    var showPromptBackgroundDialog by remember { mutableStateOf(false) }
+    var showRemoveDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val canGoPrev = projectViewModel.canGoPrevious()
     val canGoNext = projectViewModel.canGoNext()
@@ -83,6 +87,27 @@ fun EditionScreen(
             }
         )
     }
+    // Diálogo para ingresar prompt
+    if (showRemoveDialog) {
+        RemoveDialog(
+            onDismiss = { showRemoveDialog = false },
+            onConfirm = { prompt ->
+                showPromptDialog = false
+                predictViewModel.masksPoints() // Manejo del prompt
+            }
+        )
+    }
+    // Diálogo para ingresar prompt
+    if (showPromptBackgroundDialog) {
+        PromptBackgroundDialog(
+            onDismiss = { showPromptBackgroundDialog = false },
+            onConfirm = { prompt ->
+                showPromptDialog = false
+                predictViewModel.masksPoints() // Manejo del prompt
+            }
+        )
+    }
+
 
     // Pantalla principal
     if (isLoading) {
@@ -135,11 +160,19 @@ fun EditionScreen(
                     // Down Bar: visible solo si no está en modo predictivo
                     if (hasActiveMask) {
                         EditionDownBar(
-                            onDeleteMask = {
-                                masks.filter { it.active }
-                                    .forEach { maskViewModel.toggleMaskSelection(it.id) }
+                            onChangeBackground = {
+                                // Implementa la lógica para cambiar el fondo
+                                println("Cambiar fondo accionado")
+                                showPromptBackgroundDialog = true
                             },
-                            onGeneratePrompt = { showPromptDialog = true }
+                            onGenerateAI = {
+                                showPromptDialog = true // Mostrar el diálogo de generación de IA
+                            },
+                            onDeleteObject = {
+                                /*masks.filter { it.active }
+                                    .forEach { maskViewModel.toggleMaskSelection(it.id) } // Eliminar objeto activo*/
+                                showRemoveDialog = true
+                            }
                         )
                     }
                 }
