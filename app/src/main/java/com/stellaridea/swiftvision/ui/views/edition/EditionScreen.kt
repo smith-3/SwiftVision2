@@ -147,7 +147,8 @@ fun EditionScreen(
                         isPredictMode = modoPredict,
                         isImageLoading = isLoading,
                         maskViewModel = maskViewModel,
-                        isMaskLoading = isLoading
+                        isMaskLoading = isLoading,
+                        onCancelPredict = {predictViewModel.toggleModoPredict()   }
                     )
                 }
                 if (!modoPredict) {
