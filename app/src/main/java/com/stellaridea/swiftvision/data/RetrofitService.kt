@@ -44,6 +44,17 @@ interface RetrofitService {
     @GET("/images/{image_id}/masks/")
     suspend fun getMasksByImageId(@Path("image_id") imageId: Int): Response<List<Mask>>
 
+    @Multipart
+    @POST("/images/{image_id}/masks/")
+    suspend fun createMask(
+        @Path("image_id") imageId: Int,
+        @Part("counts") counts: RequestBody,
+        @Part("size") size: RequestBody,
+        @Part("bbox") bbox: RequestBody,
+        @Part("point_coords") pointCoords: RequestBody
+    ): Response<Mask>
+
+
     @GET("/images/{image_id}/download")
     suspend fun downloadImage(@Path("image_id") imageId: Int): Response<ResponseBody>
 

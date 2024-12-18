@@ -109,4 +109,8 @@ object BitmapCompressor {
         // 4. Convertimos a JSON
         return Gson().toJson(compressedData)
     }
+
+
+
+
 }

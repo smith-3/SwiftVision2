@@ -1,5 +1,10 @@
 package com.stellaridea.swiftvision.ui.views.edition.components
 
+import android.graphics.Bitmap
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import androidx.compose.ui.unit.Density
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -8,8 +13,9 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
@@ -18,13 +24,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -47,13 +58,12 @@ fun ImageViewer(
     var imageSize by remember { mutableStateOf(IntSize.Zero) }
     val masks by maskViewModel.masks.observeAsState(emptyList())
 
-    // Estado para almacenar trazos/dibujos cuando isPredictMode = true
-    val drawPaths = remember { mutableStateListOf<Offset>() }
-
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
+
     ) {
+        val density = LocalDensity.current
         val state = rememberTransformableState { zoomChange, panChange, _ ->
             scale = (scale * zoomChange).coerceIn(1f, 5f)
 
@@ -65,7 +75,6 @@ fun ImageViewer(
 
             val maxOffsetX = (imageWidth - containerWidth) / 2
             val maxOffsetY = (imageHeight - containerHeight) / 2
-
             offset = Offset(
                 x = (offset.x + panChange.x).coerceIn(-maxOffsetX, maxOffsetX),
                 y = (offset.y + panChange.y).coerceIn(-maxOffsetY, maxOffsetY)
@@ -78,65 +87,110 @@ fun ImageViewer(
             bitmap = image.bitmap.asImageBitmap(),
             contentDescription = null,
             modifier = Modifier
-                .graphicsLayer(
-                    scaleX = scale,
-                    scaleY = scale,
-                    translationX = offset.x,
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
                     translationY = offset.y
-                )
-                .transformable(state)
-                .onGloballyPositioned {
-                    imageSize = it.size
                 }
+                .onGloballyPositioned { coordinates ->
+                    imageSize = coordinates.size
+                }
+                .fillMaxWidth()
+                .transformable(state)
+
+
         )
 
         // Detección de taps y dibujo cuando isPredictMode = true
         if (isPredictMode) {
-            val lines = remember { mutableStateListOf<Line>() }
-
+            val lines = remember {
+                mutableStateListOf<Line>()
+            }
             Canvas(
                 modifier = Modifier
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        translationX = offset.x,
-                        translationY = offset.y
+                    .size(
+                        with(LocalDensity.current) { (imageSize.width ).toDp() },
+                        with(LocalDensity.current) { (imageSize.height ).toDp() }
                     )
-                    .onGloballyPositioned { /* El canvas usará el tamaño de la imagen */ }
-                    .pointerInput(Unit) {
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offset.x
+                        translationY = offset.y
+                    }
+                    .align(Alignment.Center)
+                    .pointerInput(true) {
                         detectDragGestures { change, dragAmount ->
                             change.consume()
 
-                            // Limitar el dibujo al área de la imagen
-                            val start = change.position - dragAmount
-                            val end = change.position
-                            val constrainedStart = constrainToImageBounds(start, imageSize, scale, offset)
-                            val constrainedEnd = constrainToImageBounds(end, imageSize, scale, offset)
-
-                            if (constrainedStart != null && constrainedEnd != null) {
-                                lines.add(Line(start = constrainedStart, end = constrainedEnd))
+                            // Verificar si la posición está dentro de los límites del Canvas
+                            val canvasBounds = Rect(0f, 0f, imageSize.width.toFloat(), imageSize.height.toFloat())
+                            if (!canvasBounds.contains(change.position)) {
+                                return@detectDragGestures // Si está fuera del Canvas, no hacemos nada
                             }
+
+                            if (lines.isNotEmpty()) {
+                                val lastPoint = lines.last()
+                                val distance = kotlin.math.sqrt(
+                                    (change.position.x - lastPoint.end.x).pow(2) +
+                                            (change.position.y - lastPoint.end.y).pow(2)
+                                )
+
+                                // Si la distancia es mayor que un umbral, vaciar la lista
+                                if (distance > 150f) { // Umbral de 150 píxeles
+                                    lines.clear()
+                                }
+                            }
+
+                            val line = Line(
+                                start = change.position - dragAmount,
+                                end = change.position
+                            )
+                            lines.add(line)
                         }
                     }
             ) {
-                // Dibuja las líneas dentro del canvas
+                // Dibujar los bordes del Canvas
+                drawRect(
+                    color = Color.Red, // Color de los bordes
+                    size = size,
+                    style = Stroke(width = 4f) // Grosor del borde
+                )
+
                 lines.forEach { line ->
                     drawLine(
                         color = line.color,
                         start = line.start,
                         end = line.end,
-                        strokeWidth = line.strokeWidth.toPx(),
+                        strokeWidth = line.strokeWidth.toPx() / scale,
                         cap = StrokeCap.Round
                     )
                 }
             }
-
-            // Barra inferior para Confirmar o Cancelar
-            Bar(
+            CreateMaskDownBar(
                 onCancel = { onCancelPredict() },
-                onConfirm = { /* Acción confirmar */ },
-                modifier = Modifier.align(Alignment.BottomCenter)
+                onConfirm = {
+                    // Crear Bitmap de la máscara generada
+                    val maskBitmap = generateCanvasBitmap(imageSize, scale, offset,lines,density)
+
+                    // Obtener el tamaño del Bitmap como un IntArray
+                    val maskSize = intArrayOf(maskBitmap.width, maskBitmap.height)
+
+                    // Guardar la máscara en el ViewModel
+                    maskViewModel.saveMask(maskBitmap, maskSize) { success ->
+                        if (success) {
+                            println("Máscara guardada exitosamente.")
+                        } else {
+                            println("Error al guardar la máscara.")
+                        }
+                    }
+                    onCancelPredict()
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
             )
+
         } else {
             // Modo normal: toques para seleccionar máscaras
             // Uso detectTapGestures en la capa superior
@@ -181,6 +235,52 @@ fun ImageViewer(
     }
 }
 
+fun generateCanvasBitmap(
+    imageSize: IntSize,
+    scale: Float,
+    offset: Offset,
+    lines: List<Line>,
+    density: Density
+): Bitmap {
+    // Crear un Bitmap con las dimensiones del Canvas
+    //val originalBitmap = Bitmap.createBitmap(imageSize.width, imageSize.height, Bitmap.Config.ARGB_8888)
+    val bitmap = Bitmap.createBitmap(imageSize.width, imageSize.height, Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bitmap)
+
+    // Dibujar fondo blanco
+    canvas.drawColor(android.graphics.Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
+
+//    // Escalar y desplazar el Canvas
+//    canvas.scale(scale, scale)
+//    canvas.translate(offset.x / scale, offset.y / scale)
+
+
+
+    // Dibujar las líneas
+    val paint = Paint().apply {
+        style = Paint.Style.STROKE
+        color = android.graphics.Color.RED
+        strokeCap = Paint.Cap.ROUND
+        strokeWidth = with(density) { lines.get(0).strokeWidth.toPx() } / scale
+    }
+
+    lines.forEach { line ->
+        paint.color = line.color.toArgb() // Convertir Color de Compose a Android
+        // Convertir strokeWidth de Dp a píxeles usando la densidad actual
+
+        //paint.strokeWidth = with(density) { line.strokeWidth.toPx() } / scale
+        canvas.drawLine(
+            line.start.x,
+            line.start.y,
+            line.end.x,
+            line.end.y,
+            paint
+        )
+    }
+
+
+    return bitmap
+}
 
 data class Line(
     val start: Offset,
@@ -188,33 +288,6 @@ data class Line(
     val color: Color = Color.Blue,
     val strokeWidth: Dp = 40.dp
 )
-fun constrainToImageBounds(
-    point: Offset,
-    imageSize: IntSize,
-    scale: Float,
-    offset: Offset
-): Offset? {
-    // Escala el tamaño de la imagen
-    val scaledWidth = imageSize.width * scale
-    val scaledHeight = imageSize.height * scale
-
-    // Calcula los límites visibles de la imagen
-    val leftBound = -offset.x
-    val topBound = -offset.y
-    val rightBound = scaledWidth - offset.x
-    val bottomBound = scaledHeight - offset.y
-
-    // Limita las coordenadas dentro de los límites
-    val constrainedX = point.x.coerceIn(leftBound, rightBound)
-    val constrainedY = point.y.coerceIn(topBound, bottomBound)
-
-    // Verifica si el punto está dentro de los límites
-    return if (point.x in leftBound..rightBound && point.y in topBound..bottomBound) {
-        Offset(constrainedX, constrainedY)
-    } else {
-        null // Si el punto está fuera de los límites, no lo retorna
-    }
-}
 
 
 //            val lines = remember { mutableStateListOf<Offset>() }
