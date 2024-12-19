@@ -58,6 +58,9 @@ interface RetrofitService {
     @GET("/images/{image_id}/download")
     suspend fun downloadImage(@Path("image_id") imageId: Int): Response<ResponseBody>
 
+    @GET("/images/{image_id}/thumbnail")
+    suspend fun downloadThumbnail(@Path("image_id") imageId: Int): Response<ResponseBody>
+
     @GET("/images/{project_id}/")
     suspend fun getImagesByProjectId(@Path("project_id") projectId: Int): Response<List<ImageResponse>>
 

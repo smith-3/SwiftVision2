@@ -23,7 +23,7 @@ import com.stellaridea.swiftvision.models.masks.Mask
 @Composable
 fun ItemMask(
     mask: Mask,
-    imageBitmap: ImageBitmap,
+    imageBitmap: ImageBitmap?,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -41,7 +41,9 @@ fun ItemMask(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Image(bitmap = imageBitmap, contentDescription = "Image")
+            if (imageBitmap != null) {
+                Image(bitmap = imageBitmap, contentDescription = "Image")
+            }
             Image(bitmap = maskImageBitmap, contentDescription = "Mask")
 
             if (isSelected) {

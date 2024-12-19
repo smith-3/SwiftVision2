@@ -12,13 +12,17 @@ import com.stellaridea.swiftvision.models.images.Image
 import com.stellaridea.swiftvision.models.projects.Project
 import com.stellaridea.swiftvision.models.projects.ProjectUpdate
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class ProjectViewModel @Inject constructor(
     private val retrofitService: RetrofitService,
-    public val userPreferences: UserPreferences
+    val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val _projects = MutableLiveData<List<Project>>()
@@ -28,7 +32,6 @@ class ProjectViewModel @Inject constructor(
     val isLoading: LiveData<Boolean> get() = _isLoading
 
     private val _isImageLoading = MutableLiveData(false)
-    val isImageLoading: LiveData<Boolean> get() = _isImageLoading
 
     private val userId: Int?
         get() = userPreferences.getUserId()
@@ -59,18 +62,22 @@ class ProjectViewModel @Inject constructor(
         _isImageLoading.value = true
         viewModelScope.launch {
             try {
+                // Descargar imágenes en paralelo
                 val updatedProjects = projects.map { project ->
-                    val imagesResponse = retrofitService.getImagesByProjectId(project.id)
-                    if (imagesResponse.isSuccessful) {
-                        val imageResponses = imagesResponse.body() ?: emptyList()
-                        val images = imageResponses.mapNotNull { imageResponse ->
-                            downloadImage(imageResponse.id)
+                    async {
+                        val imagesResponse = retrofitService.getImagesByProjectId(project.id)
+                        if (imagesResponse.isSuccessful) {
+                            val imageResponses = imagesResponse.body() ?: emptyList()
+                            val firstImageResponse = imageResponses.firstOrNull()
+                            val image = firstImageResponse?.let { downloadImage(it.id) }
+                            val images = image?.let { listOf(it) } ?: emptyList()
+                            project.copy(images = images)
+                        } else {
+                            project
                         }
-                        project.copy(images = images)
-                    } else {
-                        project
                     }
-                }
+                }.awaitAll()
+
                 _projects.value = updatedProjects
             } catch (e: Exception) {
                 Log.e("ProjectViewModel", "Error al descargar imágenes: ${e.localizedMessage}")
@@ -82,10 +89,14 @@ class ProjectViewModel @Inject constructor(
 
     private suspend fun downloadImage(imageId: Int): Image? {
         return try {
-            val response = retrofitService.downloadImage(imageId)
+            val response = retrofitService.downloadThumbnail(imageId)
             if (response.isSuccessful) {
-                val bitmap = BitmapFactory.decodeStream(response.body()?.byteStream())
-                bitmap?.let { Image(id = imageId, bitmap = it) }
+                val imageStream = response.body()?.byteStream()
+                withContext(Dispatchers.IO) {
+                    val bitmap = BitmapFactory.decodeStream(imageStream)
+                    Log.i("Image", "Ya decodificamos la imagen")
+                    bitmap?.let { Image(id = imageId, bitmap = it) }
+                }
             } else {
                 Log.e("ProjectViewModel", "Error al descargar imagen, código: ${response.code()}")
                 null
@@ -95,6 +106,8 @@ class ProjectViewModel @Inject constructor(
             null
         }
     }
+
+
 
     fun updateProject(projectId: Int, name: String, onSuccess: () -> Unit, onFailure: () -> Unit) {
         _isLoading.value = true

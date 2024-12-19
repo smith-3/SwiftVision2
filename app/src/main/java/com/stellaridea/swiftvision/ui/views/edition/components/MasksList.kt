@@ -34,7 +34,7 @@ import com.stellaridea.swiftvision.ui.views.edition.viewmodels.MaskViewModel
 
 @Composable
 fun MasksList(
-    imageBitmap: ImageBitmap,
+    imageBitmap: ImageBitmap?,
     state: LazyListState = rememberLazyListState(),
     viewModel: MaskViewModel,
     onAddMaskClick: () -> Unit // Callback para agregar una nueva máscara

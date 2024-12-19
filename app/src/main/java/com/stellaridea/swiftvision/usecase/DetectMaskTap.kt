@@ -50,7 +50,7 @@ private fun isPointInMask(tapPosition: Offset, maskBitmap: Bitmap): Boolean {
     val y = tapPosition.y.roundToInt()
     if (x in 0 until maskBitmap.width && y in 0 until maskBitmap.height) {
         val pixelColor = maskBitmap.getPixel(x, y)
-        return pixelColor == Color.BLUE
+        return pixelColor != Color.TRANSPARENT
     }
     return false
 }

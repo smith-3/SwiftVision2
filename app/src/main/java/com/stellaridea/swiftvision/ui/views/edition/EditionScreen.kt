@@ -61,12 +61,13 @@ fun EditionScreen(
     val hasActiveMask by remember(masks) {
         derivedStateOf { masks.any { it.active } }
     }
-    // Efectos iniciales
-    LaunchedEffect(selectedImage) {
-        selectedImage?.let { maskViewModel.loadMasksForImage(it.id) }
-    }
+
     LaunchedEffect(Unit) {
-        projectViewModel.initializeProject(projectId, projectName)
+        projectViewModel.initializeProject(projectId, projectName) {
+            if (it != null) {
+                maskViewModel.loadMasksForImage(it)
+            }
+        }
     }
 
     BackHandler {
@@ -83,7 +84,10 @@ fun EditionScreen(
             onDismiss = { showPromptDialog = false },
             onConfirm = { prompt ->
                 showPromptDialog = false
-                predictViewModel.masksPoints() // Manejo del prompt
+                val maskId: Int = maskViewModel.getActiveMasks().get(0).id.toInt()
+                projectViewModel.generateImage(maskId, prompt) {
+                    //aqui falta enviar
+                }
             }
         )
     }
@@ -93,7 +97,11 @@ fun EditionScreen(
             onDismiss = { showRemoveDialog = false },
             onConfirm = { prompt ->
                 showPromptDialog = false
-                predictViewModel.masksPoints() // Manejo del prompt
+
+                val maskId: Int = maskViewModel.getActiveMasks().get(0).id.toInt()
+                projectViewModel.generateImage(maskId, prompt) {
+                    //aqui falta enviar
+                }
             }
         )
     }
@@ -103,79 +111,75 @@ fun EditionScreen(
             onDismiss = { showPromptBackgroundDialog = false },
             onConfirm = { prompt ->
                 showPromptDialog = false
-                predictViewModel.masksPoints() // Manejo del prompt
+//                predictViewModel.masksPoints() // Manejo del prompt
             }
         )
     }
 
 
     // Pantalla principal
-    if (isLoading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color.White)
-        }
-    } else {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Top Bar
-            EditionTopBar(
-                projectName = projectName,
-                canGoPrev = canGoPrev,
-                canGoNext = canGoNext,
-                onPrevious = {
-                    projectViewModel.selectPreviousImage()
-                    selectedImage?.let { maskViewModel.loadMasksForImage(imageId = it.id) }
-                },
-                onNext = {
-                    projectViewModel.selectNextImage()
-                    selectedImage?.let { maskViewModel.loadMasksForImage(imageId = it.id) }
-                },
-                onSave = {
-                    selectedImage?.let {
-                        imageSaveViewModel.saveImageToGallery(context, it.bitmap) { save ->
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Top Bar
+        EditionTopBar(
+            projectName = projectName,
+            canGoPrev = canGoPrev,
+            canGoNext = canGoNext,
+            onPrevious = {
+                projectViewModel.selectPreviousImage()
+                selectedImage?.let { maskViewModel.loadMasksForImage(imageId = it.id) }
+            },
+            onNext = {
+                projectViewModel.selectNextImage()
+                selectedImage?.let { maskViewModel.loadMasksForImage(imageId = it.id) }
+            },
+            onSave = {
+                selectedImage?.let {
+                    it.bitmap?.let { it1 ->
+                        imageSaveViewModel.saveImageToGallery(context, it1) { save ->
                             // Manejar el guardado exitoso
                         }
                     }
-                },
+                }
+            },
 //                onTogglePredict = { predictViewModel.toggleModoPredict() },
 //                isPredictMode = modoPredict
-            )
+        )
 
-            selectedImage?.let { image ->
-                Box(modifier = Modifier.weight(1f)) {
-                    ImageViewer(
-                        image = image,
-                        isPredictMode = modoPredict,
-                        isImageLoading = isLoading,
-                        maskViewModel = maskViewModel,
-                        isMaskLoading = isLoading,
-                        onCancelPredict = {predictViewModel.toggleModoPredict()   }
-                    )
+        selectedImage?.let { image ->
+            Box(modifier = Modifier.weight(1f)) {
+                ImageViewer(
+                    image = image,
+                    isPredictMode = modoPredict,
+                    maskViewModel = maskViewModel,
+                    isLoading = isLoading,
+                    onCancelPredict = { predictViewModel.toggleModoPredict() }
+                )
+            }
+            if (!modoPredict) {
+                MasksList(
+                    imageBitmap = image.bitmap?.asImageBitmap(),
+                    viewModel = maskViewModel,
+                ) {
+                    predictViewModel.toggleModoPredict()
                 }
-                if (!modoPredict) {
-                    MasksList(
-                        imageBitmap = image.bitmap.asImageBitmap(),
-                        viewModel = maskViewModel,
-                    ) {
-                        predictViewModel.toggleModoPredict()
-                    }
-                    // Down Bar: visible solo si no está en modo predictivo
-                    if (hasActiveMask) {
-                        EditionDownBar(
-                            onChangeBackground = {
-                                // Implementa la lógica para cambiar el fondo
-                                println("Cambiar fondo accionado")
-                                showPromptBackgroundDialog = true
-                            },
-                            onGenerateAI = {
-                                showPromptDialog = true // Mostrar el diálogo de generación de IA
-                            },
-                            onDeleteObject = {
-                                /*masks.filter { it.active }
-                                    .forEach { maskViewModel.toggleMaskSelection(it.id) } // Eliminar objeto activo*/
-                                showRemoveDialog = true
-                            }
-                        )
-                    }
+                // Down Bar: visible solo si no está en modo predictivo
+                if (hasActiveMask) {
+                    EditionDownBar(
+                        onChangeBackground = {
+                            // Implementa la lógica para cambiar el fondo
+                            println("Cambiar fondo accionado")
+                            showPromptBackgroundDialog = true
+                        },
+                        onGenerateAI = {
+                            showPromptDialog = true // Mostrar el diálogo de generación de IA
+                        },
+                        onDeleteObject = {
+                            /*masks.filter { it.active }
+                                .forEach { maskViewModel.toggleMaskSelection(it.id) } // Eliminar objeto activo*/
+                            showRemoveDialog = true
+                        }
+                    )
                 }
             }
         }

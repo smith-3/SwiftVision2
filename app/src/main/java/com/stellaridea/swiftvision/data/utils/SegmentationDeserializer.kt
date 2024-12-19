@@ -2,9 +2,8 @@ package com.stellaridea.swiftvision.data.utils
 
 import android.graphics.Bitmap
 import android.graphics.Color
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonDeserializer
-import com.google.gson.JsonElement
+import androidx.core.graphics.ColorUtils
+import com.google.gson.*
 import com.stellaridea.swiftvision.models.masks.Mask
 import java.lang.reflect.Type
 import java.util.Date
@@ -14,69 +13,75 @@ class SegmentationDeserializer : JsonDeserializer<Mask> {
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Mask {
         val jsonObject = json.asJsonObject
 
+        // Obtener campos básicos con valores por defecto
         val id = jsonObject.get("id")?.asLong ?: Date().time
         val imageId = jsonObject.get("image_id")?.asInt ?: 0
-        val active = jsonObject.get("active")?.asBoolean ?: false
 
-        // El campo "size" es un string como "(width, height)"
-        val sizeString = jsonObject.get("size")?.asString ?: "(0, 0)"
-        val size = parseSize(sizeString)
+        // Parsear el campo "size" como lista de enteros
+        val sizeJsonArray = jsonObject.getAsJsonArray("size") ?: JsonArray()
+        val size = parseSize(sizeJsonArray)
         val width = size[0]
         val height = size[1]
 
-        // "counts" es un string complejo. Tenemos que parsearlo.
-        val countsString = jsonObject.get("counts")?.asString ?: "[]"
-        val maskBitmap = decodeCounts(countsString, width, height)
+        // Parsear el campo "counts" como JsonArray
+        val countsJsonElement = jsonObject.get("counts") ?: JsonArray()
+        if (!countsJsonElement.isJsonArray) {
+            throw JsonParseException("El campo 'counts' no es un JsonArray.")
+        }
+        val countsJsonArray = countsJsonElement.asJsonArray
+
+        // Decodificar counts para obtener la máscara Bitmap
+        val maskBitmap = decodeCounts(countsJsonArray, width, height)
 
         return Mask(
             id = id,
             bitmap = maskBitmap,
             size = size,
-            active = active
+            active = false
         )
     }
 
     /**
-     * Parsea el campo `size` desde el formato "(width, height)".
+     * Parsea el campo `size` desde un JsonArray.
      */
-    private fun parseSize(sizeString: String): IntArray {
-        val numbers = sizeString.removeSurrounding("(", ")").split(",")
-            .map { it.trim().toInt() }
-        return intArrayOf(numbers[0], numbers[1])
+    private fun parseSize(sizeJsonArray: JsonArray): IntArray {
+        return if (sizeJsonArray.size() >= 2) {
+            intArrayOf(
+                sizeJsonArray[0].asInt,
+                sizeJsonArray[1].asInt
+            )
+        } else {
+            intArrayOf(0, 0)
+        }
     }
 
     /**
-     * Decodifica el campo "counts" en su formato comprimido, similar a la lógica Python.
-     * Formato: "[([(l1, v1), (l2, v2), ...], count), ([(...)], count), ...]"
+     * Decodifica el campo "counts" en su formato comprimido.
+     * Formato esperado: [
+     *   [[length, value], count],
+     *   ...
+     * ]
      */
-    private fun decodeCounts(countsString: String, width: Int, height: Int): Bitmap {
+    private fun decodeCounts(countsJsonArray: JsonArray, width: Int, height: Int): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val pixels = IntArray(width * height) { Color.TRANSPARENT }
 
-        // Removemos los corchetes del principio y del final
-        val trimmed = countsString.trim().removePrefix("[").removeSuffix("]")
-
-        // Cada elemento se ajusta al patrón: "([(x,y), (x,y), ...], count)"
-        // Usaremos una regex para extraer row_tuples y count.
-        // Patrón para extraer cada bloque: \(\[\((.*?)\)\], *(\d+)\)
-        // (.*?) captura todo el contenido entre "((...))"
-        // (\d+) captura el count
-        val pattern = """\(\[\((.*?)\)\],\s*(\d+)\)""".toRegex()
-        val matches = pattern.findAll(trimmed)
-
         var y = 0
-        val color = Color.BLUE
+        val color = ColorUtils.setAlphaComponent(Color.BLUE, 128) // 128 es el valor alfa
 
-        for (match in matches) {
-            val rowData = match.groupValues[1] // Ej: "683, 0), (7, 1), (206, 0"
-            val count = match.groupValues[2].toInt()
+        for (row in countsJsonArray) {
+            val rowJsonArray = row.asJsonArray
+            val rowPairsJsonArray = rowJsonArray[0].asJsonArray
+            val repeatCount = rowJsonArray[1].asInt
 
-            val pairs = parsePairs(rowData) // Lista de (length, value)
             val rowPixels = IntArray(width) { Color.TRANSPARENT }
-
             var x = 0
-            for ((length, value) in pairs) {
+
+            for (pairJsonArray in rowPairsJsonArray) {
+                val length = pairJsonArray.asJsonArray[0].asInt
+                val value = pairJsonArray.asJsonArray[1].asInt
                 val pixelColor = if (value == 1) color else Color.TRANSPARENT
+
                 for (i in 0 until length) {
                     if (x < width) {
                         rowPixels[x++] = pixelColor
@@ -86,8 +91,8 @@ class SegmentationDeserializer : JsonDeserializer<Mask> {
                 }
             }
 
-            // Repetimos esta fila 'count' veces
-            for (i in 0 until count) {
+            // Repetir la fila el número de veces indicado
+            for (i in 0 until repeatCount) {
                 if (y < height) {
                     System.arraycopy(rowPixels, 0, pixels, y * width, width)
                     y++
@@ -99,25 +104,5 @@ class SegmentationDeserializer : JsonDeserializer<Mask> {
 
         bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
         return bitmap
-    }
-
-    /**
-     * Parsea los pares (length, value) de una cadena como "683, 0), (7, 1), (206, 0"
-     * Dividimos por "), (" para separar cada par.
-     */
-    private fun parsePairs(data: String): List<Pair<Int, Int>> {
-        // Separar por "), (" para aislar cada (length, value)
-        val pairStrings = data.split("),")
-            .map { it.replace("(", "").replace(")", "").trim() }
-            .filter { it.isNotBlank() }
-
-        val pairs = mutableListOf<Pair<Int, Int>>()
-        for (ps in pairStrings) {
-            val parts = ps.split(",").map { it.trim() }
-            val length = parts[0].toInt()
-            val value = parts[1].toInt()
-            pairs.add(length to value)
-        }
-        return pairs
     }
 }

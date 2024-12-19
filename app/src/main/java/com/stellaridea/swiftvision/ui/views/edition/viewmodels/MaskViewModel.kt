@@ -68,6 +68,7 @@ class MaskViewModel @Inject constructor(
                 val response = retrofitService.getMasksByImageId(imageId)
                 if (response.isSuccessful) {
                     _masks.value = response.body() ?: emptyList()
+                    Log.i("Mask", "${masks.value?.size}")
                 } else {
                     Log.e("MaskViewModel", "Failed to fetch masks: ${response.errorBody()?.string()}")
                 }
@@ -122,6 +123,7 @@ class MaskViewModel @Inject constructor(
         }
     }
 
-
-
+    fun getActiveMasks(): List<Mask> {
+        return _masks.value?.filter { it.active } ?: emptyList()
+    }
 }

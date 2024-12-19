@@ -35,18 +35,18 @@ class PredictViewModel @Inject constructor(
         _predict.value = Predict(emptyList(), emptyList())
     }
 
-    fun masksPoints() {
-        viewModelScope.launch {
-            val points = _predict.value?.points ?: return@launch
-            val labels = _predict.value?.labels ?: return@launch
-
-            try {
-                val pointsBody = RequestBody.create("application/json".toMediaTypeOrNull(), points.toString())
-                val labelsBody = RequestBody.create("application/json".toMediaTypeOrNull(), labels.toString())
-                retrofitService.maskPoints(pointsBody, labelsBody)
-            } catch (e: Exception) {
-                Log.e("PredictViewModel", "Error processing mask points: ${e.message}")
-            }
-        }
-    }
+//    fun masksPoints() {
+//        viewModelScope.launch {
+//            val points = _predict.value?.points ?: return@launch
+//            val labels = _predict.value?.labels ?: return@launch
+//
+//            try {
+//                val pointsBody = RequestBody.create("application/json".toMediaTypeOrNull(), points.toString())
+//                val labelsBody = RequestBody.create("application/json".toMediaTypeOrNull(), labels.toString())
+//                retrofitService.maskPoints(pointsBody, labelsBody)
+//            } catch (e: Exception) {
+//                Log.e("PredictViewModel", "Error processing mask points: ${e.message}")
+//            }
+//        }
+//    }
 }
