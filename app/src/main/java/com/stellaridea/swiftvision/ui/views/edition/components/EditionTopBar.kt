@@ -33,18 +33,18 @@ fun EditionTopBar(
     ) {
         // Botones de navegación (izquierda)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            IconButton(onClick = onPrevious, enabled = canGoPrev) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack, // Ícono de flecha más moderno
-                    contentDescription = "Previous",
-                    tint = if (canGoPrev) Color.White else Color.Gray
-                )
-            }
             IconButton(onClick = onNext, enabled = canGoNext) {
                 Icon(
-                    imageVector = Icons.Default.ArrowForward, // Ícono de flecha más moderno
-                    contentDescription = "Next",
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Previous",
                     tint = if (canGoNext) Color.White else Color.Gray
+                )
+            }
+            IconButton(onClick = onPrevious, enabled = canGoPrev) {
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = "Next",
+                    tint = if (canGoPrev) Color.White else Color.Gray
                 )
             }
         }

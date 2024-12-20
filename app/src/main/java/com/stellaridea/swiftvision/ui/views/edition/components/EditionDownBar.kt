@@ -21,19 +21,21 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
 @Composable
 fun EditionDownBar(
     onChangeBackground: () -> Unit,
     onGenerateAI: () -> Unit,
-    onDeleteObject: () -> Unit
+    onDeleteObject: () -> Unit,
+    isEnabled: Boolean // Nuevo parámetro para habilitar/deshabilitar
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp)
-            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
-
+            .background(
+                MaterialTheme.colorScheme.background,
+                RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp)
+            )
     ) {
         Row(
             modifier = Modifier
@@ -47,31 +49,29 @@ fun EditionDownBar(
                 Icon(
                     imageVector = Icons.Filled.Photo,
                     contentDescription = "Cambiar Fondo",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                        .clickable { onChangeBackground() }
+                    tint = if (isEnabled) MaterialTheme.colorScheme.primary else Color.Gray,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable(enabled = isEnabled) { onChangeBackground() }
                 )
                 Text(
                     text = "Cambiar fondo",
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.primary
+                    color = if (isEnabled) MaterialTheme.colorScheme.primary else Color.Gray
                 )
             }
 
             // Botón central: Generar con IA (resaltado y sobresaliente con borde blanco)
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .offset(y = (-20).dp) // Hace que sobresalga
-
+                modifier = Modifier.offset(y = (-20).dp) // Hace que sobresalga
             ) {
                 // Círculo blanco (borde)
                 Box(
                     modifier = Modifier
                         .size(75.dp) // Tamaño ligeramente mayor al círculo púrpura
                         .background(MaterialTheme.colorScheme.background, CircleShape)
-
                 )
 
                 // Círculo púrpura (contenido principal)
@@ -79,8 +79,11 @@ fun EditionDownBar(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .size(60.dp) // Tamaño del círculo púrpura
-                        .background(MaterialTheme.colorScheme.primary, CircleShape) // Color púrpura
-                        .clickable { onGenerateAI() }
+                        .background(
+                            if (isEnabled) MaterialTheme.colorScheme.primary else Color.Gray,
+                            CircleShape
+                        )
+                        .clickable(enabled = isEnabled) { onGenerateAI() }
                 ) {
                     Icon(
                         imageVector = Icons.Filled.AutoAwesome,
@@ -91,21 +94,21 @@ fun EditionDownBar(
                 }
             }
 
-
             // Botón derecho: Eliminar Objeto
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
                     imageVector = Icons.Filled.Delete,
                     contentDescription = "Eliminar Objeto",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(28.dp)
-                        .clickable { onDeleteObject() }
+                    tint = if (isEnabled) MaterialTheme.colorScheme.primary else Color.Gray,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable(enabled = isEnabled) { onDeleteObject() }
                 )
                 Text(
                     text = "Eliminar objeto",
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.primary
+                    color = if (isEnabled) MaterialTheme.colorScheme.primary else Color.Gray
                 )
             }
         }

@@ -51,6 +51,8 @@ import com.stellaridea.swiftvision.data.utils.BitmapCompressor
 import com.stellaridea.swiftvision.models.masks.Mask
 import com.stellaridea.swiftvision.ui.views.edition.DetectMaskTap
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
@@ -66,6 +68,8 @@ class MaskViewModel @Inject constructor(
 
     private val _isMaskLoading = MutableLiveData(false)
     val isMaskLoading: LiveData<Boolean> = _isMaskLoading
+
+
 
     fun loadMasksForImage(imageId: Int) {
         _isMaskLoading.value = true
@@ -87,11 +91,12 @@ class MaskViewModel @Inject constructor(
     }
 
     fun toggleMaskSelection(maskId: Long) {
-        val updatedMasks = _masks.value?.map {
-            if (it.id == maskId) it.copy(active = !it.active) else it
+        val updatedMasks = _masks.value?.map { mask ->
+            mask.copy(active = mask.id == maskId) // Solo el seleccionado tendrá active = true
         } ?: return
         _masks.value = updatedMasks
     }
+
 
     fun detectMaskTap(tapPosition: Offset, maskSize: IntSize) {
         val currentMasks = _masks.value ?: return
@@ -108,29 +113,21 @@ class MaskViewModel @Inject constructor(
     }
 
     fun saveMask(bitmap: Bitmap, size: IntArray, imageId: Int, onComplete: (Boolean) -> Unit) {
+        _isMaskLoading.value = true
+        Log.d("eaeae", "incion: ${isMaskLoading.value}")
         viewModelScope.launch {
             try {
                 // Comprimir el bitmap y obtener el JSON para "counts"
-                val countsJson = BitmapCompressor.compressBitmapSelectionToJson(bitmap, Color.BLUE)
-                Log.d("saveMask", "Counts JSON: $countsJson")
+                val countsJson = withContext(Dispatchers.IO) {
+                    BitmapCompressor.compressBitmapSelectionToJson(bitmap, Color.BLUE)
+                }
 
-// Crear los datos necesarios para enviar al backend
+                // Crear los datos necesarios para enviar al backend
                 val countsBody = countsJson.toRequestBody("application/json".toMediaTypeOrNull())
                 val sizeBody = Gson().toJson(size).toRequestBody("application/json".toMediaTypeOrNull())
                 val bboxBody = Gson().toJson(listOf(0, 0, size[0], size[1])).toRequestBody("application/json".toMediaTypeOrNull())
                 val pointCoordsBody = Gson().toJson(listOf(listOf(0, 0))).toRequestBody("application/json".toMediaTypeOrNull())
 
-// Usar un Buffer para obtener el contenido del RequestBody como String
-                val countsJsonString = countsBodyToString(countsBody)
-                val sizeJsonString = countsBodyToString(sizeBody)
-                val bboxJsonString = countsBodyToString(bboxBody)
-                val pointCoordsJsonString = countsBodyToString(pointCoordsBody)
-
-// Loggear los datos
-                Log.d("saveMask", "Counts JSON: $countsJsonString")
-                Log.d("saveMask", "Size JSON: $sizeJsonString")
-                Log.d("saveMask", "BBox JSON: $bboxJsonString")
-                Log.d("saveMask", "PointCoords JSON: $pointCoordsJsonString")
                 // Enviar la máscara al backend para crearla en la base de datos
                 val response = retrofitService.createMask(
                     imageId = imageId, // Pasar el imageId correcto
@@ -139,7 +136,6 @@ class MaskViewModel @Inject constructor(
                     bbox = bboxBody,
                     pointCoords = pointCoordsBody
                 )
-
                 if (response.isSuccessful) {
                     // La respuesta debe contener la máscara recién creada, con el id generado en la base de datos
                     val createdMask = response.body()
@@ -166,6 +162,9 @@ class MaskViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e("MaskViewModel", "Exception saving mask: ${e.message}")
                 onComplete(false)
+            }finally {
+                _isMaskLoading.value = false
+                Log.d("eaeae", "fin: ${isMaskLoading.value}")
             }
         }
     }

@@ -18,7 +18,7 @@ fun ConfirmNavigationDialog(
             },
             onDismiss = { onDialogStateChange(false) },
             title = "Confirmación",
-            message = "¿Estás seguro de que deseas volver atrás y perder tu progreso?"
+            message = "¿Estás seguro de que deseas salir del proyecto?"
         )
     }
 }

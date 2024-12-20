@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
@@ -32,11 +33,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.stellaridea.swiftvision.models.images.Image
 import com.stellaridea.swiftvision.ui.common.MaskImageOverlay
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.MaskViewModel
 import kotlin.math.pow
 import kotlin.math.sqrt
+
 
 @Composable
 fun ImageViewer(
@@ -44,6 +47,7 @@ fun ImageViewer(
     maskViewModel: MaskViewModel,
     isPredictMode: Boolean,
     isLoading: Boolean,
+    isMaskLoading: Boolean,
     onCancelPredict: () -> Unit
 ) {
     var scale by remember { mutableStateOf(1f) }
@@ -91,10 +95,21 @@ fun ImageViewer(
                     .onGloballyPositioned { coordinates ->
                         imageSize = coordinates.size
                     }
-                    .fillMaxWidth()
+                    .wrapContentSize()
                     .transformable(state)
             )
+            if (isMaskLoading) {
 
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color.Black.copy(alpha = 0.7f))
+                        .zIndex(1f), // Mayor prioridad en el eje Z
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF34D399))
+                }
+            }
             if (isPredictMode) {
                 val lines = remember {
                     mutableStateListOf<Line>()
@@ -160,9 +175,9 @@ fun ImageViewer(
                         }
                 ) {
                     drawRect(
-                        color = Color.Red,
+                        color =  Color(0xFF34D399),
                         size = size,
-                        style = Stroke(width = 4f)
+                        style = Stroke(width = 5f)
                     )
 
                     lines.forEach { line ->
@@ -179,6 +194,7 @@ fun ImageViewer(
                 CreateMaskDownBar(
                     onCancel = { onCancelPredict() },
                     onConfirm = {
+
                         val maskBitmap = generateCanvasBitmap(
                             originalWidth,
                             originalHeight,
@@ -189,6 +205,7 @@ fun ImageViewer(
                         )
                         val maskSize = intArrayOf(maskBitmap.width, maskBitmap.height)
                         val selectedImage = image.id
+
                         maskViewModel.saveMask(maskBitmap, maskSize, selectedImage) { success ->
                             if (success) {
                                 println("Máscara guardada exitosamente.")
@@ -202,7 +219,11 @@ fun ImageViewer(
                         .align(Alignment.BottomCenter)
                 )
 
+
+
+
             } else {
+
                 // Doble tap en modo normal para restaurar zoom/posicion
                 Image(
                     bitmap = image.bitmap!!.asImageBitmap(),
@@ -253,17 +274,17 @@ fun ImageViewer(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(color = Color.Black)
-                    .graphicsLayer {
-                        alpha = 0.5f
-                    },
+                    .background(color = Color.Black.copy(alpha = 0.7f)),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = Color.White)
+                CircularProgressIndicator(color = Color(0xFF34D399))
             }
         }
+
     }
+
 }
+
 
 
 fun generateCanvasBitmap(
@@ -285,7 +306,7 @@ fun generateCanvasBitmap(
             style = Paint.Style.STROKE
             color = android.graphics.Color.RED
             strokeCap = Paint.Cap.ROUND
-            strokeWidth = with(density) { lines[0].strokeWidth.toPx() } // Grosor en espacio original
+            strokeWidth = with(density) { lines[0].strokeWidth.toPx() /scale} // Grosor en espacio original
         }
 
         // Escalar las coordenadas de las líneas a las dimensiones originales
@@ -309,8 +330,6 @@ fun generateCanvasBitmap(
         }
     }
 
-    Log.d("BitmapDimensions", "Original Width: $originalWidth, Height: $originalHeight")
-    Log.d("BitmapDimensions", "Bitmap Width: ${bitmap.width}, Height: ${bitmap.height}")
     return bitmap
 }
 

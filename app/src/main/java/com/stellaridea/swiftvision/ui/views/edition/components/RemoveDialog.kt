@@ -1,105 +1,128 @@
 package com.stellaridea.swiftvision.ui.views.edition.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun RemoveMaskDialog(
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: (String) -> Unit
 ) {
+    var textValue by remember { mutableStateOf("") }
+
     Dialog(
         onDismissRequest = { onDismiss() },
-        properties = DialogProperties(dismissOnClickOutside = true)
+        properties = DialogProperties(dismissOnClickOutside = true) // Permite cerrar al tocar fuera
     ) {
+        // Contenedor principal del diálogo
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.onPrimary, shape = RoundedCornerShape(16.dp))
-                .padding(24.dp)
+                .background(MaterialTheme.colorScheme.onPrimary, shape = RoundedCornerShape(16.dp)) // Fondo blanco con bordes redondeados
+                .padding( 24.dp) // Reducir padding superior
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
+
             ) {
-                // Icono principal
+
+                // Botón central: Generar con IA (resaltado y sobresaliente con borde blanco)
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.offset(y = (-50).dp)
+                    modifier = Modifier
+                        .offset(y = (-50).dp) // Hace que sobresalga
+
                 ) {
+                    // Círculo blanco (borde)
                     Box(
                         modifier = Modifier
-                            .size(85.dp)
+                            .size(85.dp) // Tamaño ligeramente mayor al círculo púrpura
                             .background(MaterialTheme.colorScheme.onPrimary, CircleShape)
+
                     )
+
+                    // Círculo púrpura (contenido principal)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(60.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .size(60.dp) // Tamaño del círculo púrpura
+                            .background(MaterialTheme.colorScheme.primary, CircleShape) // Color púrpura
                     ) {
                         Icon(
                             imageVector = Icons.Filled.AutoAwesome,
-                            contentDescription = "Confirmar remoción",
+                            contentDescription = "Generar con IA",
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)
                         )
                     }
                 }
 
-                // Título
+// Mensaje para el usuario
                 Text(
-                    text = "¿Remover máscara?",
+                    text = "¡Remueve el objeto!",
                     style = TextStyle(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold, // Aplica negrita
+                        fontSize = 30.sp,
                         textAlign = TextAlign.Center
                     ),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color.White,
                     modifier = Modifier
-                        .padding(top = 8.dp, bottom = 16.dp)
-                        .align(Alignment.CenterHorizontally)
+                        .offset(y = (-30).dp) // Ajusta la posición hacia arriba
+                        .padding(10.dp) // Espaciado interno
+                        .align(Alignment.CenterHorizontally) // Alinea al centro horizontalmente
                 )
 
-                // Mensaje de confirmación
                 Text(
-                    text = "¿Estás seguro de que deseas eliminar la máscara de la imagen? Esta acción no se puede deshacer.",
+                    text = "Elimina el objeto que no deseas en la imagen con AI",
                     style = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = 20.sp,
                         textAlign = TextAlign.Center
                     ),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    color = Color.White,
+                    modifier = Modifier
+                        .offset(y = (-20).dp) // Ajusta la posición hacia arriba
+                        .align(Alignment.CenterHorizontally) // Alinea al centro horizontalmente
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 // Botones de acción
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     // Botón cancelar
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancelar", color = MaterialTheme.colorScheme.error)
+                    Button(onClick = onDismiss) {
+                        Text("Cancelar")
                     }
-
-                    // Botón confirmar
-                    Button(onClick = onConfirm) {
+                    // Botón generar
+                    Button(onClick = { onConfirm(textValue) }) {
                         Text("Remover")
                     }
                 }
