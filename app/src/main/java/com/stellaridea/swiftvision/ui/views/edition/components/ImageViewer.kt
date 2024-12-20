@@ -3,8 +3,8 @@ package com.stellaridea.swiftvision.ui.views.edition.components
 import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.PorterDuff
+import android.util.Log
 import androidx.compose.ui.unit.Density
-
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -12,22 +12,12 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -46,6 +36,7 @@ import com.stellaridea.swiftvision.models.images.Image
 import com.stellaridea.swiftvision.ui.common.MaskImageOverlay
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.MaskViewModel
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 @Composable
 fun ImageViewer(
@@ -63,8 +54,7 @@ fun ImageViewer(
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
-
-        ) {
+    ) {
         val density = LocalDensity.current
         val state = rememberTransformableState { zoomChange, panChange, _ ->
             scale = (scale * zoomChange).coerceIn(1f, 5f)
@@ -82,7 +72,12 @@ fun ImageViewer(
                 y = (offset.y + panChange.y).coerceIn(-maxOffsetY, maxOffsetY)
             )
         }
+
         if (image.bitmap != null) {
+            // Obtener dimensiones originales de la imagen
+            val originalWidth = image.bitmap!!.width
+            val originalHeight = image.bitmap!!.height
+
             Image(
                 bitmap = image.bitmap!!.asImageBitmap(),
                 contentDescription = null,
@@ -98,18 +93,32 @@ fun ImageViewer(
                     }
                     .fillMaxWidth()
                     .transformable(state)
-
             )
 
             if (isPredictMode) {
                 val lines = remember {
                     mutableStateListOf<Line>()
                 }
+
+                // Detectar doble tap para restaurar escala y offset en modo predict
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onDoubleTap = {
+                                    scale = 1f
+                                    offset = Offset.Zero
+                                }
+                            )
+                        }
+                )
+
                 Canvas(
                     modifier = Modifier
                         .size(
-                            with(LocalDensity.current) { (imageSize.width).toDp() },
-                            with(LocalDensity.current) { (imageSize.height).toDp() }
+                            with(LocalDensity.current) { imageSize.width.toDp() },
+                            with(LocalDensity.current) { imageSize.height.toDp() }
                         )
                         .graphicsLayer {
                             scaleX = scale
@@ -121,24 +130,23 @@ fun ImageViewer(
                         .pointerInput(true) {
                             detectDragGestures { change, dragAmount ->
                                 change.consume()
-                                val canvasBounds =
-                                    Rect(
-                                        0f,
-                                        0f,
-                                        imageSize.width.toFloat(),
-                                        imageSize.height.toFloat()
-                                    )
+                                val canvasBounds = Rect(
+                                    0f,
+                                    0f,
+                                    imageSize.width.toFloat(),
+                                    imageSize.height.toFloat()
+                                )
                                 if (!canvasBounds.contains(change.position)) {
-                                    return@detectDragGestures // Si está fuera del Canvas, no hacemos nada
+                                    return@detectDragGestures
                                 }
 
                                 if (lines.isNotEmpty()) {
                                     val lastPoint = lines.last()
-                                    val distance = kotlin.math.sqrt(
+                                    val distance = sqrt(
                                         (change.position.x - lastPoint.end.x).pow(2) +
                                                 (change.position.y - lastPoint.end.y).pow(2)
                                     )
-                                    if (distance > 150f) { // Umbral de 150 píxeles
+                                    if (distance > 150f) {
                                         lines.clear()
                                     }
                                 }
@@ -152,9 +160,9 @@ fun ImageViewer(
                         }
                 ) {
                     drawRect(
-                        color = Color.Red, // Color de los bordes
+                        color = Color.Red,
                         size = size,
-                        style = Stroke(width = 4f) // Grosor del borde
+                        style = Stroke(width = 4f)
                     )
 
                     lines.forEach { line ->
@@ -167,13 +175,21 @@ fun ImageViewer(
                         )
                     }
                 }
+
                 CreateMaskDownBar(
                     onCancel = { onCancelPredict() },
                     onConfirm = {
-                        val maskBitmap =
-                            generateCanvasBitmap(imageSize, scale, lines, density)
+                        val maskBitmap = generateCanvasBitmap(
+                            originalWidth,
+                            originalHeight,
+                            imageSize,
+                            scale,
+                            lines,
+                            density
+                        )
                         val maskSize = intArrayOf(maskBitmap.width, maskBitmap.height)
-                        maskViewModel.saveMask(maskBitmap, maskSize) { success ->
+                        val selectedImage = image.id
+                        maskViewModel.saveMask(maskBitmap, maskSize, selectedImage) { success ->
                             if (success) {
                                 println("Máscara guardada exitosamente.")
                             } else {
@@ -187,7 +203,7 @@ fun ImageViewer(
                 )
 
             } else {
-                // Modo normal: toques para seleccionar máscaras
+                // Doble tap en modo normal para restaurar zoom/posicion
                 Image(
                     bitmap = image.bitmap!!.asImageBitmap(),
                     contentDescription = null,
@@ -203,12 +219,18 @@ fun ImageViewer(
                         }
                         .transformable(state)
                         .pointerInput(Unit) {
-                            detectTapGestures { tapOffset ->
-                                maskViewModel.detectMaskTap(
-                                    tapOffset,
-                                    imageSize
-                                )
-                            }
+                            detectTapGestures(
+                                onDoubleTap = {
+                                    scale = 1f
+                                    offset = Offset.Zero
+                                },
+                                onTap = { tapOffset ->
+                                    maskViewModel.detectMaskTap(
+                                        tapOffset,
+                                        imageSize
+                                    )
+                                }
+                            )
                         }
                 )
 
@@ -226,7 +248,8 @@ fun ImageViewer(
 
             }
         }
-        if (isLoading || image.bitmap == null){
+
+        if (isLoading || image.bitmap == null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -242,42 +265,52 @@ fun ImageViewer(
     }
 }
 
+
 fun generateCanvasBitmap(
+    originalWidth: Int,
+    originalHeight: Int,
     imageSize: IntSize,
     scale: Float,
     lines: List<Line>,
     density: Density
 ): Bitmap {
-    // Crear un Bitmap con las dimensiones del Canvas
-    val bitmap = Bitmap.createBitmap(imageSize.width, imageSize.height, Bitmap.Config.ARGB_8888)
+    // Crear el bitmap con las dimensiones originales de la imagen
+    val bitmap = Bitmap.createBitmap(originalWidth, originalHeight, Bitmap.Config.ARGB_8888)
     val canvas = android.graphics.Canvas(bitmap)
 
-    // Dibujar fondo blanco
     canvas.drawColor(android.graphics.Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
 
-    // Dibujar las líneas
-    val paint = Paint().apply {
-        style = Paint.Style.STROKE
-        color = android.graphics.Color.RED
-        strokeCap = Paint.Cap.ROUND
-        strokeWidth = with(density) { lines.get(0).strokeWidth.toPx() } / scale
+    if (lines.isNotEmpty()) {
+        val paint = Paint().apply {
+            style = Paint.Style.STROKE
+            color = android.graphics.Color.RED
+            strokeCap = Paint.Cap.ROUND
+            strokeWidth = with(density) { lines[0].strokeWidth.toPx() } // Grosor en espacio original
+        }
+
+        // Escalar las coordenadas de las líneas a las dimensiones originales
+        val scaleX = originalWidth.toFloat() / imageSize.width.toFloat()
+        val scaleY = originalHeight.toFloat() / imageSize.height.toFloat()
+
+        lines.forEach { line ->
+            paint.color = line.color.toArgb()
+            val startX = line.start.x * scaleX
+            val startY = line.start.y * scaleY
+            val endX = line.end.x * scaleX
+            val endY = line.end.y * scaleY
+
+            canvas.drawLine(
+                startX,
+                startY,
+                endX,
+                endY,
+                paint
+            )
+        }
     }
 
-    lines.forEach { line ->
-        paint.color = line.color.toArgb() // Convertir Color de Compose a Android
-        // Convertir strokeWidth de Dp a píxeles usando la densidad actual
-
-        //paint.strokeWidth = with(density) { line.strokeWidth.toPx() } / scale
-        canvas.drawLine(
-            line.start.x,
-            line.start.y,
-            line.end.x,
-            line.end.y,
-            paint
-        )
-    }
-
-
+    Log.d("BitmapDimensions", "Original Width: $originalWidth, Height: $originalHeight")
+    Log.d("BitmapDimensions", "Bitmap Width: ${bitmap.width}, Height: ${bitmap.height}")
     return bitmap
 }
 
@@ -287,4 +320,3 @@ data class Line(
     val color: Color = Color.Blue,
     val strokeWidth: Dp = 40.dp
 )
-

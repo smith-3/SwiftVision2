@@ -2,6 +2,7 @@ package com.stellaridea.swiftvision.data.utils
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.util.Log
 import com.google.gson.Gson
 import com.stellaridea.swiftvision.models.encode.CompressedRow
 
@@ -17,6 +18,9 @@ object BitmapCompressor {
     ): Array<BooleanArray> {
         val width = bitmap.width
         val height = bitmap.height
+
+        // Imprime las dimensiones del Bitmap
+        Log.d("saveMask", "333333333Width: $width, Height: $height")
         val matrix = Array(height) { BooleanArray(width) { false } }
 
         for (y in 0 until height) {
@@ -99,17 +103,56 @@ object BitmapCompressor {
     fun compressBitmapSelectionToJson(bitmap: Bitmap, selectionColor: Int = Color.WHITE): String {
         // 1. Convertimos el Bitmap en matriz booleana
         val matrix = bitmapToBooleanMatrix(bitmap, selectionColor)
+        Log.d("saveMask", "aaaaa: ${matrix.size}")
+        Log.d("saveMask", "bbbbb: ${matrix[0].size}")
 
         // 2. RLE por fila
         val encodedMatrix = runLengthEncodeMatrix(matrix)
 
         // 3. Compresión de filas
         val compressedData = compressEncodedMatrix(encodedMatrix)
+        // 4. Convertimos a un formato JSON más complejo
+        val transformedData = transformToRequiredFormat(compressedData)
 
         // 4. Convertimos a JSON
-        return Gson().toJson(compressedData)
+        return Gson().toJson(transformedData)
     }
 
+    private fun transformToRequiredFormat(compressedData: List<CompressedRow>): List<List<Any>> {
+        val result = mutableListOf<List<Any>>()
+
+        for (compressedRow in compressedData) {
+            val rowSegments = compressedRow.rowSegments
+            val transformedRow = mutableListOf<Any>()
+
+            // Se agrupan los segmentos en la forma requerida
+            val segmentsGroup = mutableListOf<List<Int>>()
+            var currentCount = compressedRow.count
+
+            // Para cada segmento en una fila, agrupamos el length y el value en pares
+            for (segment in rowSegments) {
+                val segmentPairs = mutableListOf<Int>()
+                val segmentValues = listOf(segment.length, segment.value)
+
+                // Convertir cada valor de la secuencia en un par
+                for (i in segmentValues.indices step 2) {
+                    // Crear el par [length, value] de acuerdo al formato
+                    segmentPairs.add(segmentValues[i])
+                    segmentPairs.add(segmentValues[i + 1])
+                }
+
+                segmentsGroup.add(segmentPairs)
+            }
+
+            // Añadir la lista de segmentos y el count correspondiente
+            transformedRow.add(segmentsGroup)
+            transformedRow.add(currentCount)
+
+            result.add(transformedRow)
+        }
+
+        return result
+    }
 
 
 

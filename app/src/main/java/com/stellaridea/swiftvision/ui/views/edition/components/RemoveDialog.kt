@@ -87,9 +87,7 @@ fun RemoveMaskDialog(
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
-
                 Spacer(modifier = Modifier.height(16.dp))
-
                 // Botones de acción
                 Row(
                     modifier = Modifier.fillMaxWidth(),
