@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.stellaridea.swiftvision.ui.views.edition.components.ConfirmNavigationDialog
 import com.stellaridea.swiftvision.ui.views.edition.components.EditionDownBar
@@ -28,7 +29,7 @@ import com.stellaridea.swiftvision.ui.views.edition.components.ImageViewer
 import com.stellaridea.swiftvision.ui.views.edition.components.MasksList
 import com.stellaridea.swiftvision.ui.views.edition.components.PromptBackgroundDialog
 import com.stellaridea.swiftvision.ui.views.edition.components.PromptDialog
-import com.stellaridea.swiftvision.ui.views.edition.components.RemoveDialog
+import com.stellaridea.swiftvision.ui.views.edition.components.RemoveMaskDialog
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.ImageSaveViewModel
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.MaskViewModel
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.PredictViewModel
@@ -86,21 +87,23 @@ fun EditionScreen(
                 showPromptDialog = false
                 val maskId: Int = maskViewModel.getActiveMasks().get(0).id.toInt()
                 projectViewModel.generateImage(maskId, prompt) {
-                    //aqui falta enviar
-                }
+                    if (it != null) {
+                        maskViewModel.loadMasksForImage(imageId = it)
+                    }                }
             }
         )
     }
     // Diálogo para ingresar prompt
     if (showRemoveDialog) {
-        RemoveDialog(
+        RemoveMaskDialog(
             onDismiss = { showRemoveDialog = false },
-            onConfirm = { prompt ->
-                showPromptDialog = false
-
+            onConfirm = {
+                showRemoveDialog = false
                 val maskId: Int = maskViewModel.getActiveMasks().get(0).id.toInt()
-                projectViewModel.generateImage(maskId, prompt) {
-                    //aqui falta enviar
+                projectViewModel.processRemove(maskId) {
+                    if (it != null) {
+                        maskViewModel.loadMasksForImage(imageId = it)
+                    }
                 }
             }
         )
@@ -110,8 +113,13 @@ fun EditionScreen(
         PromptBackgroundDialog(
             onDismiss = { showPromptBackgroundDialog = false },
             onConfirm = { prompt ->
-                showPromptDialog = false
-//                predictViewModel.masksPoints() // Manejo del prompt
+                showPromptBackgroundDialog = false
+                val maskId: Int = maskViewModel.getActiveMasks().get(0).id.toInt()
+                projectViewModel.generateImageBackground(maskId, prompt) {
+                    if (it != null) {
+                        maskViewModel.loadMasksForImage(imageId = it)
+                    }
+                }
             }
         )
     }

@@ -182,7 +182,7 @@ class ProjectViewModel @Inject constructor(
     /**
      * Procesa inpainting con la máscara seleccionada.
      */
-    fun processInpainting(maskId: Int, onComplete: (Int?) -> Unit) {
+    fun processRemove(maskId: Int, onComplete: (Int?) -> Unit) {
         val project = _selectedProject.value
         val image = _selectedImage.value
         if (project == null || image == null) {
@@ -271,6 +271,8 @@ class ProjectViewModel @Inject constructor(
                     Log.i("ProjectViewModel", "Background generation successful")
                     // Reinicia el proyecto y selecciona la nueva imagen.
                     initializeProject(project.id, project.name, onComplete)
+                    onComplete(_selectedImage.value?.id)
+
                 } else {
                     Log.e(
                         "ProjectViewModel",
@@ -332,8 +334,6 @@ class ProjectViewModel @Inject constructor(
     }
 
     fun uploadMaskSelection(
-        projectId: Int,
-        imageId: Int,
         bitmap: Bitmap,
         selectionColor: Int = ColorUtils.setAlphaComponent(Color.BLUE, 128),
         onResult: (Boolean) -> Unit
@@ -351,9 +351,9 @@ class ProjectViewModel @Inject constructor(
 
                 // 2. Preparar RequestBody para cada campo
                 val projectIdBody =
-                    RequestBody.create("text/plain".toMediaTypeOrNull(), projectId.toString())
+                    RequestBody.create("text/plain".toMediaTypeOrNull(), _selectedProject.value?.id.toString())
                 val imageIdBody =
-                    RequestBody.create("text/plain".toMediaTypeOrNull(), imageId.toString())
+                    RequestBody.create("text/plain".toMediaTypeOrNull(), _selectedImage.value?.id.toString())
                 val sizeBody = RequestBody.create(
                     "text/plain".toMediaTypeOrNull(),
                     "(${bitmap.width}, ${bitmap.height})"

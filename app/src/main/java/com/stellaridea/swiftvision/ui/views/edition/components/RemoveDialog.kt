@@ -1,125 +1,94 @@
 package com.stellaridea.swiftvision.ui.views.edition.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
-fun RemoveDialog(
+fun RemoveMaskDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
+    onConfirm: () -> Unit
 ) {
-    var textValue by remember { mutableStateOf("") }
-
     Dialog(
         onDismissRequest = { onDismiss() },
-        properties = DialogProperties(dismissOnClickOutside = true) // Permite cerrar al tocar fuera
+        properties = DialogProperties(dismissOnClickOutside = true)
     ) {
-        // Contenedor principal del diálogo
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.onPrimary, shape = RoundedCornerShape(16.dp)) // Fondo blanco con bordes redondeados
-                .padding( 24.dp) // Reducir padding superior
+                .background(MaterialTheme.colorScheme.onPrimary, shape = RoundedCornerShape(16.dp))
+                .padding(24.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
-
             ) {
-
-                // Botón central: Generar con IA (resaltado y sobresaliente con borde blanco)
+                // Icono principal
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .offset(y = (-50).dp) // Hace que sobresalga
-
+                    modifier = Modifier.offset(y = (-50).dp)
                 ) {
-                    // Círculo blanco (borde)
                     Box(
                         modifier = Modifier
-                            .size(85.dp) // Tamaño ligeramente mayor al círculo púrpura
+                            .size(85.dp)
                             .background(MaterialTheme.colorScheme.onPrimary, CircleShape)
-
                     )
-
-                    // Círculo púrpura (contenido principal)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(60.dp) // Tamaño del círculo púrpura
-                            .background(MaterialTheme.colorScheme.primary, CircleShape) // Color púrpura
+                            .size(60.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.AutoAwesome,
-                            contentDescription = "Generar con IA",
+                            contentDescription = "Confirmar remoción",
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)
                         )
                     }
                 }
 
-// Mensaje para el usuario
+                // Título
                 Text(
-                    text = "¡Remueve el objeto!",
+                    text = "¿Remover máscara?",
                     style = TextStyle(
-                        fontWeight = FontWeight.Bold, // Aplica negrita
-                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
                         textAlign = TextAlign.Center
                     ),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                        .offset(y = (-30).dp) // Ajusta la posición hacia arriba
-                        .padding(10.dp) // Espaciado interno
-                        .align(Alignment.CenterHorizontally) // Alinea al centro horizontalmente
+                        .padding(top = 8.dp, bottom = 16.dp)
+                        .align(Alignment.CenterHorizontally)
                 )
 
+                // Mensaje de confirmación
                 Text(
-                    text = "Elimina el objeto que no deseas en la imagen con AI",
+                    text = "¿Estás seguro de que deseas eliminar la máscara de la imagen? Esta acción no se puede deshacer.",
                     style = TextStyle(
-                        fontSize = 20.sp,
+                        fontSize = 16.sp,
                         textAlign = TextAlign.Center
                     ),
-                    color = Color.White,
-                    modifier = Modifier
-                        .offset(y = (-20).dp) // Ajusta la posición hacia arriba
-                        .align(Alignment.CenterHorizontally) // Alinea al centro horizontalmente
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Campo de texto para el prompt
-                OutlinedTextField(
-                    value = textValue,
-                    onValueChange = { textValue = it },
-                    label = { Text("Ingresa tu promt") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
 
                 // Botones de acción
                 Row(
@@ -127,11 +96,12 @@ fun RemoveDialog(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     // Botón cancelar
-                    Button(onClick = onDismiss) {
-                        Text("Cancelar")
+                    TextButton(onClick = onDismiss) {
+                        Text("Cancelar", color = MaterialTheme.colorScheme.error)
                     }
-                    // Botón generar
-                    Button(onClick = { onConfirm(textValue) }) {
+
+                    // Botón confirmar
+                    Button(onClick = onConfirm) {
                         Text("Remover")
                     }
                 }
