@@ -109,15 +109,6 @@ fun RemoveDialog(
                         .align(Alignment.CenterHorizontally) // Alinea al centro horizontalmente
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Campo de texto para el prompt
-                OutlinedTextField(
-                    value = textValue,
-                    onValueChange = { textValue = it },
-                    label = { Text("Ingresa tu promt") },
-                    modifier = Modifier.fillMaxWidth()
-                )
 
                 Spacer(modifier = Modifier.height(24.dp))
 

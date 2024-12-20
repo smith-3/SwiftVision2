@@ -3,6 +3,7 @@ package com.stellaridea.swiftvision.ui.views.edition.components
 import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.PorterDuff
+import android.util.Log
 import androidx.compose.ui.unit.Density
 
 import androidx.compose.foundation.Canvas
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.stellaridea.swiftvision.models.images.Image
 import com.stellaridea.swiftvision.ui.common.MaskImageOverlay
 import com.stellaridea.swiftvision.ui.views.edition.viewmodels.MaskViewModel
+import com.stellaridea.swiftvision.ui.views.edition.viewmodels.ProjectViewModel
 import kotlin.math.pow
 
 @Composable
@@ -173,7 +175,8 @@ fun ImageViewer(
                         val maskBitmap =
                             generateCanvasBitmap(imageSize, scale, lines, density)
                         val maskSize = intArrayOf(maskBitmap.width, maskBitmap.height)
-                        maskViewModel.saveMask(maskBitmap, maskSize) { success ->
+                        val selectedImage = image.id
+                        maskViewModel.saveMask(maskBitmap, maskSize, selectedImage) { success ->
                             if (success) {
                                 println("Máscara guardada exitosamente.")
                             } else {
@@ -277,7 +280,8 @@ fun generateCanvasBitmap(
         )
     }
 
-
+    Log.d("BitmapDimensions", "Width: ${imageSize.width}, Height: ${imageSize.height}")
+    Log.d("BitmapDimensions", "Width: ${bitmap.width}, Height: ${bitmap.height}")
     return bitmap
 }
 
